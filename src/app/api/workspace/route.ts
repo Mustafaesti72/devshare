@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > 4000000) {
+    if (size > 16000000) {
       await reader.cancel();
       return Response.json(
         { error: "Workspace data is too large." },

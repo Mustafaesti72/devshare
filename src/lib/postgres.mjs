@@ -18,6 +18,7 @@ export function initialize() {
       CREATE TABLE IF NOT EXISTS listings(id BIGINT PRIMARY KEY, owner_id BIGINT NOT NULL, full_name TEXT NOT NULL, summary TEXT NOT NULL, submitted BIGINT NOT NULL, status TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS reviews(id BIGINT NOT NULL, action TEXT NOT NULL, at BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS data_migrations(name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1;
       CREATE INDEX IF NOT EXISTS listings_status_submitted ON listings(status, submitted DESC);
       CREATE INDEX IF NOT EXISTS proofs_expiry ON proofs(expires);
       CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY,github_id BIGINT NOT NULL UNIQUE,github_login TEXT NOT NULL,display_name TEXT NOT NULL,bio TEXT NOT NULL DEFAULT '',website TEXT NOT NULL DEFAULT '',avatar_url TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
@@ -102,7 +103,7 @@ export async function submit(token, repo, summary) {
     );
     await client.query(
       `INSERT INTO listings(id,owner_id,full_name,summary,submitted,status) VALUES($1,$2,$3,$4,$5,'pending')
-      ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id,full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending'`,
+      ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id,full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending',revision=listings.revision+1`,
       [repo.id, repo.owner.id, repo.full_name, summary, Date.now()],
     );
   });
@@ -123,10 +124,10 @@ export async function review(id, action) {
   return transaction(async (client) => {
     if (
       !(
-        await client.query("UPDATE listings SET status=$1 WHERE id=$2", [
-          action,
-          id,
-        ])
+        await client.query(
+          "UPDATE listings SET status=$1,revision=revision+1 WHERE id=$2",
+          [action, id],
+        )
       ).rowCount
     )
       throw new Error("Listing not found");

@@ -146,17 +146,11 @@ try {
   const record = (await publishing.pendingReviews("hidden"))[0];
   assert.equal(await publishing.publishedProject("check/widget"), null);
   assert.equal(
-    await publishing.moderate(
-      1,
-      record.submitted - 1,
-      "approved",
-      "Checked",
-      1,
-    ),
+    await publishing.moderate(1, record.revision - 1, "approved", "Checked", 1),
     false,
   );
   assert.equal(
-    await publishing.moderate(1, record.submitted, "approved", "Checked", 1),
+    await publishing.moderate(1, record.revision, "approved", "Checked", 1),
     true,
   );
   assert.equal(
@@ -178,7 +172,7 @@ try {
   ).readObject((await images.listingForImage(1)).object_key);
   assert.equal(Buffer.from(object.bytes).subarray(0, 4).toString(), "RIFF");
   assert.equal(
-    await publishing.moderate(1, record.submitted, "approved", "Stale", 1),
+    await publishing.moderate(1, record.revision, "approved", "Stale", 1),
     false,
   );
   await images.removeListingImage(1, 1);
@@ -188,6 +182,23 @@ try {
     1,
     await readFile("public/owners/duckdb.png"),
   );
+
+  const finalRevision = (await publishing.pendingReviews("pending"))[0]
+    .revision;
+  assert.equal(await publishing.withdrawProject(1, 2, finalRevision), false);
+  assert.equal(await publishing.withdrawProject(1, 1, finalRevision), true);
+  assert.equal(
+    await publishing.moderate(1, finalRevision, "approved", "Withdrawn", 1),
+    false,
+  );
+  assert.equal(await publishing.publishedProject("check/widget"), null);
+  const newProof = await db.startProof("check/widget");
+  await db.submit(
+    newProof.token,
+    { id: 1, full_name: "check/widget", owner: { id: 1 } },
+    "Resubmitted diagnostic",
+  );
+  assert.equal((await db.listings("pending")).length, 1);
   await accounts.deleteAccount(user.id);
   await images.cleanMedia();
   assert.deepEqual(await workspace.readWorkspace(user.id), {});
@@ -224,6 +235,7 @@ try {
       workspaceConflict: "passed",
       imageUpload: "passed",
       staleReview: "passed",
+      withdrawal: "passed",
       mediaCleanup: "passed",
       s3: "passed",
       productionCounts: counts.rows[0],

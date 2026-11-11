@@ -14,6 +14,7 @@ export type UserProject = {
   summary: string;
   status: string;
   submitted: number;
+  revision: number;
   has_image?: boolean;
   feedback?: string;
 };

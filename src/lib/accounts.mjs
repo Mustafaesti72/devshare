@@ -160,7 +160,7 @@ export async function userProjects(githubId, publicOnly = false) {
   await initialize();
   return (
     await pool.query(
-      `SELECT id::float8 AS id,full_name,summary,status,submitted::float8 AS submitted,EXISTS(SELECT 1 FROM listing_images WHERE listing_id=listings.id) AS has_image,(SELECT reason FROM moderation_events WHERE listing_id=listings.id ORDER BY at DESC LIMIT 1) AS feedback FROM listings WHERE owner_id=$1 AND ${publicOnly ? "status='approved'" : "status IN ('approved','pending','hidden')"} ORDER BY submitted DESC LIMIT 100`,
+      `SELECT id::float8 AS id,full_name,summary,status,submitted::float8 AS submitted,revision::float8 AS revision,EXISTS(SELECT 1 FROM listing_images WHERE listing_id=listings.id) AS has_image,(SELECT reason FROM moderation_events WHERE listing_id=listings.id AND at>=listings.submitted ORDER BY at DESC LIMIT 1) AS feedback FROM listings WHERE owner_id=$1 AND ${publicOnly ? "status='approved'" : "status IN ('approved','pending','hidden','withdrawn')"} ORDER BY submitted DESC LIMIT 100`,
       [githubId],
     )
   ).rows;

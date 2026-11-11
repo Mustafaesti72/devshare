@@ -8,7 +8,12 @@ export const metadata = {
   title: "Your dashboard",
   robots: { index: false, follow: false },
 };
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const { notice } = await searchParams;
   const user = await currentUser();
   if (!user) redirect("/login");
   const moderator = await currentModerator();
@@ -30,6 +35,13 @@ export default async function Dashboard() {
         <Link href="/saved">Library</Link>
         {moderator && <Link href="/moderation">Review submissions</Link>}
       </nav>
+      {notice && (
+        <p role="status">
+          {notice === "withdrawn"
+            ? "Project withdrawn from discovery."
+            : "The submission changed. Review its latest status below."}
+        </p>
+      )}
       <section>
         <h2>Your repositories</h2>
         {projects.length ? (
@@ -45,7 +57,9 @@ export default async function Dashboard() {
                       ? "In review"
                       : p.status === "approved"
                         ? "Published"
-                        : "Hidden"}
+                        : p.status === "withdrawn"
+                          ? "Withdrawn"
+                          : "Hidden"}
                   </span>
                 </div>
                 <p>{p.summary}</p>
@@ -64,10 +78,27 @@ export default async function Dashboard() {
                     timeZone: "UTC",
                   })}
                 </small>
+                <p>
+                  <Link
+                    href={
+                      "/for-developers?repo=" + encodeURIComponent(p.full_name)
+                    }
+                  >
+                    Edit and resubmit →
+                  </Link>
+                </p>
+                {p.status !== "withdrawn" && (
+                  <form method="post" action={"/api/submissions/" + p.id}>
+                    <input type="hidden" name="revision" value={p.revision} />
+                    <button className="plain-button">
+                      Withdraw from discovery
+                    </button>
+                  </form>
+                )}
                 <ProjectImageUpload
                   id={p.id}
                   hasImage={p.has_image}
-                  version={p.submitted}
+                  version={p.revision}
                 />
               </article>
             ))}

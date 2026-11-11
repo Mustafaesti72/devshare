@@ -55,7 +55,7 @@ export default async function Showcase(props: Props) {
       {row.has_image && (
         <Image
           className="project-cover"
-          src={"/api/listing-images/" + row.id + "?v=" + row.submitted}
+          src={"/api/listing-images/" + row.id + "?v=" + row.revision}
           width={1200}
           height={750}
           alt={row.full_name + " project cover"}

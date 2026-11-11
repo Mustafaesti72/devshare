@@ -1,10 +1,19 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
-export function PublishForm({signedIn=false}:{signedIn?:boolean}) {
-  const [repo, setRepo] = useState(""),
+export function PublishForm({
+  signedIn = false,
+  initialRepo = "",
+  initialSummary = "",
+}: {
+  signedIn?: boolean;
+  initialRepo?: string;
+  initialSummary?: string;
+}) {
+  const [repo, setRepo] = useState(initialRepo),
     [phrase, setPhrase] = useState(""),
     [gist, setGist] = useState(""),
-    [summary, setSummary] = useState(""),
+    [summary, setSummary] = useState(initialSummary),
     [done, setDone] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -43,6 +52,9 @@ export function PublishForm({signedIn=false}:{signedIn?:boolean}) {
         {done} passed repository ownership verification. An editor can now
         review your description for publication.
       </p>
+      <Link className="btn" href="/dashboard">
+        View your submissions →
+      </Link>
     </section>
   ) : (
     <form className="pub-box" onSubmit={send}>
@@ -58,25 +70,32 @@ export function PublishForm({signedIn=false}:{signedIn?:boolean}) {
       </label>
       {(phrase || signedIn) && (
         <>
-          {!signedIn && <><p>
-            Create a public Gist in your repository owner account. Name the file{" "}
-            <code>devshare.txt</code> and paste this one-time phrase. It expires
-            in 15 minutes.
-          </p>
-          <pre>{phrase}</pre>
-          <a href="https://gist.github.com/" target="_blank" rel="noreferrer">
-            Open GitHub Gist
-          </a>
-          <label>
-            Gist URL
-            <input
-              required
-              type="url"
-              value={gist}
-              onChange={(e) => setGist(e.target.value)}
-            />
-          </label>
-          </>}
+          {!signedIn && (
+            <>
+              <p>
+                Create a public Gist in your repository owner account. Name the
+                file <code>devshare.txt</code> and paste this one-time phrase.
+                It expires in 15 minutes.
+              </p>
+              <pre>{phrase}</pre>
+              <a
+                href="https://gist.github.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open GitHub Gist
+              </a>
+              <label>
+                Gist URL
+                <input
+                  required
+                  type="url"
+                  value={gist}
+                  onChange={(e) => setGist(e.target.value)}
+                />
+              </label>
+            </>
+          )}
           <label>
             What can someone build with your project?
             <textarea
@@ -97,8 +116,8 @@ export function PublishForm({signedIn=false}:{signedIn?:boolean}) {
           : signedIn
             ? "Submit for review"
             : phrase
-            ? "Verify and submit for review"
-            : "Start ownership verification"}
+              ? "Verify and submit for review"
+              : "Start ownership verification"}
       </button>
       {phrase && (
         <button

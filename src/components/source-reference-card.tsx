@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { type PublicRepository } from "@/lib/github-input";
 import { useResearch } from "@/lib/research";
-import { sourceKey } from "@/lib/source-references";
+import { sourceKey, useSourceReferences } from "@/lib/source-references";
 import { Icon } from "./icon";
 import { CollectionPicker, ResearchEditor } from "./research-actions";
 import { Modal } from "./modal";
@@ -13,7 +13,9 @@ export function SourceReferenceCard({
   repository: PublicRepository;
 }) {
   const [edit, setEdit] = useState(false);
-  const { notes } = useResearch();
+  const { notes, removeProject } = useResearch();
+  const { removeReference } = useSourceReferences();
+  const [removing, setRemoving] = useState(false);
   const key = sourceKey(p);
   const note = notes[key];
   return (
@@ -50,6 +52,9 @@ export function SourceReferenceCard({
           {note?.text ? "Edit note" : "Add note"}
         </button>
         <CollectionPicker projectId={key} />
+        <button className="plain-button" onClick={() => setRemoving(true)}>
+          Remove from library
+        </button>
         <Link
           className="plain-button"
           href={`/inspect?repo=${encodeURIComponent(p.fullName)}`}
@@ -72,6 +77,31 @@ export function SourceReferenceCard({
         {new Date(p.fetchedAt).toLocaleDateString("en-GB", { timeZone: "UTC" })}{" "}
         · Ownership not verified
       </span>
+      <Modal
+        open={removing}
+        onClose={() => setRemoving(false)}
+        title={"Remove " + p.fullName + "?"}
+      >
+        <p>
+          This removes the project, its notes and its collection entries from
+          your private library.
+        </p>
+        <div className="account-actions">
+          <button className="btn" onClick={() => setRemoving(false)}>
+            Cancel
+          </button>
+          <button
+            className="btn primary"
+            onClick={() => {
+              removeProject(key);
+              removeReference(p.id);
+              setRemoving(false);
+            }}
+          >
+            Remove project
+          </button>
+        </div>
+      </Modal>
       <Modal
         open={edit}
         onClose={() => setEdit(false)}

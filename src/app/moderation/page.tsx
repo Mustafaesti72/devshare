@@ -66,7 +66,7 @@ export default async function Moderation({
           {row.has_image && (
             <Image
               className="project-cover"
-              src={"/api/listing-images/" + row.id + "?v=" + row.submitted}
+              src={"/api/listing-images/" + row.id + "?v=" + row.revision}
               width={800}
               height={500}
               alt="Submitted project cover"
@@ -75,7 +75,7 @@ export default async function Moderation({
           )}
           <form className="profile-form" method="post" action="/api/moderation">
             <input type="hidden" name="id" value={row.id} />
-            <input type="hidden" name="submitted" value={row.submitted} />
+            <input type="hidden" name="revision" value={row.revision} />
             <label>
               Review note
               <textarea name="reason" maxLength={1000} rows={3} />

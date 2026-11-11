@@ -56,7 +56,7 @@ export async function saveListingImage(id, ownerId, input) {
         [id, key],
       );
       await c.query(
-        "UPDATE listings SET status='pending',submitted=$1 WHERE id=$2",
+        "UPDATE listings SET status='pending',submitted=$1,revision=revision+1 WHERE id=$2",
         [Date.now(), id],
       );
       if (previous)
@@ -124,7 +124,7 @@ export async function removeListingImage(id, ownerId) {
         [image.object_key],
       );
       await c.query(
-        "UPDATE listings SET status='pending',submitted=$1 WHERE id=$2",
+        "UPDATE listings SET status='pending',submitted=$1,revision=revision+1 WHERE id=$2",
         [Date.now(), id],
       );
     }

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   try {
     result = (await moderate(
       Number(data.get("id")),
-      Number(data.get("submitted")),
+      Number(data.get("revision")),
       String(data.get("action")),
       String(data.get("reason") || ""),
       user.github_id,

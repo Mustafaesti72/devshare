@@ -3,6 +3,7 @@ export type PublishedProject = {
   full_name: string;
   summary: string;
   submitted: number;
+  revision: number;
   has_image?: boolean;
   creator_id?: string;
   creator_name?: string;
@@ -13,6 +14,7 @@ export type Review = {
   full_name: string;
   summary: string;
   submitted: number;
+  revision: number;
   status: string;
   has_image?: boolean;
 };
@@ -22,7 +24,7 @@ export function publishedProject(
 export function pendingReviews(status: string): Promise<Review[]>;
 export function moderate(
   id: number,
-  submitted: number,
+  revision: number,
   action: string,
   reason: string,
   reviewerId: number,
@@ -30,3 +32,9 @@ export function moderate(
 export function publishedPaths(): Promise<
   { full_name: string; submitted: number }[]
 >;
+
+export function withdrawProject(
+  id: number,
+  ownerId: number,
+  revision: number,
+): Promise<boolean>;

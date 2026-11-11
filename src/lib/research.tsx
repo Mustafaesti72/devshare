@@ -30,6 +30,7 @@ type Research = {
   ) => void;
   toggleItem: (id: string, projectId: string) => void;
   saveNote: (id: string, note: ResearchNote) => void;
+  removeProject: (id: string) => void;
   toggleFollow: (handle: string) => void;
 };
 const Context = createContext<Research | null>(null);
@@ -102,6 +103,23 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
       }),
     );
   }
+  function removeProject(id: string) {
+    setCollections(
+      JSON.stringify(
+        collections.map((collection) => ({
+          ...collection,
+          projectIds: collection.projectIds.filter(
+            (projectId) => projectId !== id,
+          ),
+        })),
+      ),
+    );
+    setNotes(
+      JSON.stringify(
+        Object.fromEntries(Object.entries(notes).filter(([key]) => key !== id)),
+      ),
+    );
+  }
   function toggleFollow(handle: string) {
     setFollowing(
       JSON.stringify(
@@ -121,6 +139,7 @@ export function ResearchProvider({ children }: { children: React.ReactNode }) {
         updateCollection,
         toggleItem,
         saveNote,
+        removeProject,
         toggleFollow,
       }}
     >
