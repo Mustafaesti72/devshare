@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { useSourceReferences, sourceKey } from "@/lib/source-references";
 import { SourceReferenceCard } from "./source-reference-card";
+import bundles from "@/lib/bundles.json";
 import { useStored } from "@/lib/browser-store";
 import Link from "next/link";
 import { useResearch, type PersonalCollection } from "@/lib/research";
-import { projects, collections as curated, projectPath } from "@/lib/catalog";
+import { projects, projectPath } from "@/lib/catalog";
 import { useWorkspace } from "./workspace";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
@@ -61,13 +62,13 @@ export function CollectionWorkspace() {
         </span>
         <span>
           <Icon name="shield" />
-          Stored on this device
+          Private library
         </span>
       </div>
       <div className="library-tabs">
         {[
           ["mine", "My collections"],
-          ["curated", "Sample sets"],
+          ["curated", "Reading lists"],
           ["archived", "Archived"],
         ].map(([id, label]) => (
           <button
@@ -85,32 +86,16 @@ export function CollectionWorkspace() {
       </div>
       {tab === "curated" ? (
         <div className="collection-grid">
-          {curated.map((c, i) => (
+          {bundles.map((c) => (
             <Link
-              href={`/collections/${c.slug}`}
               key={c.slug}
-              className={`collection-card ${c.color}`}
+              href={"/bundles/" + c.slug}
+              className="collection-card personal-card"
             >
-              <div className="collection-art">
-                <span className="collection-index">COLLECTION / 0{i + 1}</span>
-                <div className="collection-marks">
-                  {c.ids.map((id) => (
-                    <ProjectMark
-                      key={id}
-                      project={projects.find((p) => p.id === id)!}
-                      large
-                    />
-                  ))}
-                </div>
-                <span className="collection-art-caption">{c.label}</span>
-              </div>
               <div className="collection-body">
-                <span>{c.ids.length} PROJECTS · SAMPLE COLLECTION</span>
                 <h2>{c.name}</h2>
                 <p>{c.description}</p>
-                <div>
-                  Open collection <Icon name="arrow" size={16} />
-                </div>
+                <span>{c.repos.length} repositories</span>
               </div>
             </Link>
           ))}
@@ -302,7 +287,7 @@ export function CollectionWorkspace() {
           <div className="modal-form-footer">
             <span>
               <Icon name="shield" size={13} />
-              Only saved in this browser
+              Saved to your private library
             </span>
             <button className="btn primary" type="submit">
               {editing ? "Save changes" : "Create collection"}
@@ -328,11 +313,8 @@ export function PersonalCollectionPage({ id }: { id: string }) {
         </Link>
         <div className="empty-state">
           <Icon name="folder" size={30} />
-          <h1>Collection not found on this device.</h1>
-          <p>
-            Personal collections are stored in the browser where you created
-            them.
-          </p>
+          <h1>Collection not found.</h1>
+          <p>Sign in to the account you used to create this collection.</p>
         </div>
       </main>
     );
@@ -710,13 +692,6 @@ export function ResearchLibrary() {
       >
         {noteId && <ResearchEditor key={noteId} projectId={noteId} />}
       </Modal>
-      <div className="library-storage-note">
-        <Icon name="shield" size={15} />
-        <span>
-          Your library is stored on this device. Nothing is sent to an AI
-          provider.
-        </span>
-      </div>
     </main>
   );
 }

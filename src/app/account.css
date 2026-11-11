@@ -1,27 +1,192 @@
-.account-page{max-width:960px!important;padding-block:48px!important}
-.account-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0}
-.account-page h1{font-size:clamp(30px,5vw,48px);line-height:1.1;letter-spacing:-.045em;margin:12px 0 20px}
-.account-page p{line-height:1.7}
-.account-intro{max-width:570px;margin:30px auto 80px}
-.account-intro h1{font-size:clamp(36px,5vw,60px)}
-.account-intro>.btn{margin:20px 0}
-.account-note{font-size:13px;opacity:.75;max-width:68ch}
-.account-note a{text-decoration:underline}
-.account-nav{display:flex;gap:24px;border-block:1px solid var(--line,#ddd);padding:16px 0;margin:24px 0 36px;flex-wrap:wrap}
-.account-empty{padding:24px 0 40px;max-width:60ch}
-.account-empty p:first-child{font-size:22px;font-weight:600}
-.account-projects article,.account-projects{padding-block:20px}
-.account-projects article{border-bottom:1px solid var(--line,#ddd)}
-.account-projects article>div{display:flex;justify-content:space-between;gap:20px}
-.account-security{border-top:1px solid var(--line,#ddd);margin-top:40px;padding-top:24px}
-.account-actions{display:flex;gap:12px;flex-wrap:wrap}
-.profile-form{max-width:580px;display:grid;gap:20px;margin:30px 0}
-.profile-form label{display:grid;gap:8px;font-size:14px;font-weight:600}
-.profile-form input,.profile-form textarea{padding:12px;border:1px solid #9998;border-radius:5px;background:var(--surface,#fff);color:inherit;font:inherit}
-.profile-form .btn{justify-self:start}
-.member-head{display:flex;align-items:center;gap:24px;margin:35px 0}
-.member-head h1{margin:0 0 10px}
-.member-initial{display:grid;place-items:center;width:76px;height:76px;flex-shrink:0;background:#ede8dc;color:#74412d;border-radius:50%;font-size:32px}
-.member-bio{max-width:65ch;white-space:pre-wrap;margin-bottom:32px}
-.account-link{font-size:12px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:9px}
-@media(max-width:640px){.account-heading{align-items:start;flex-direction:column}.account-link{max-width:90px}.shared-nav>div{flex-wrap:wrap}.account-projects article>div{flex-wrap:wrap}}
+.account-page {
+  max-width: 960px !important;
+  padding-block: 48px !important;
+}
+.account-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 24px 0;
+}
+.account-page h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  margin: 12px 0 20px;
+}
+.account-page p {
+  line-height: 1.7;
+}
+.account-intro {
+  max-width: 570px;
+  margin: 30px auto 80px;
+}
+.account-intro h1 {
+  font-size: clamp(36px, 5vw, 60px);
+}
+.account-intro > .btn {
+  margin: 20px 0;
+}
+.account-note {
+  font-size: 13px;
+  opacity: 0.75;
+  max-width: 68ch;
+}
+.account-note a {
+  text-decoration: underline;
+}
+.account-nav {
+  display: flex;
+  gap: 24px;
+  border-block: 1px solid var(--line, #ddd);
+  padding: 16px 0;
+  margin: 24px 0 36px;
+  flex-wrap: wrap;
+}
+.account-empty {
+  padding: 24px 0 40px;
+  max-width: 60ch;
+}
+.account-empty p:first-child {
+  font-size: 22px;
+  font-weight: 600;
+}
+.account-projects article,
+.account-projects {
+  padding-block: 20px;
+}
+.account-projects article {
+  border-bottom: 1px solid var(--line, #ddd);
+}
+.account-projects article > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.account-security {
+  border-top: 1px solid var(--line, #ddd);
+  margin-top: 40px;
+  padding-top: 24px;
+}
+.account-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.profile-form {
+  max-width: 580px;
+  display: grid;
+  gap: 20px;
+  margin: 30px 0;
+}
+.profile-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.profile-form input,
+.profile-form textarea {
+  padding: 12px;
+  border: 1px solid #9998;
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+.profile-form .btn {
+  justify-self: start;
+}
+.member-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 35px 0;
+}
+.member-head h1 {
+  margin: 0 0 10px;
+}
+.member-initial {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  background: #ede8dc;
+  color: #74412d;
+  border-radius: 50%;
+  font-size: 32px;
+}
+.member-bio {
+  max-width: 65ch;
+  white-space: pre-wrap;
+  margin-bottom: 32px;
+}
+.account-link {
+  font-size: 12px;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 9px;
+}
+@media (max-width: 640px) {
+  .account-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .account-link {
+    max-width: 90px;
+  }
+  .shared-nav > div {
+    flex-wrap: wrap;
+  }
+  .account-projects article > div {
+    flex-wrap: wrap;
+  }
+}
+
+.workspace-sync {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 12px 24px;
+  font-size: 12px;
+  color: var(--muted, #666);
+}
+.workspace-sync > div {
+  padding: 16px;
+  border: 1px solid #aa8;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.moderation-card {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line, #ddd);
+}
+.moderation-card > p {
+  white-space: pre-wrap;
+}
+
+.project-cover {
+  width: 100%;
+  height: auto;
+  max-height: 650px;
+  object-fit: contain;
+  border: 1px solid var(--line, #ddd);
+  border-radius: 6px;
+  margin-block: 24px;
+}
+.project-upload {
+  font-size: 13px;
+  padding-block: 16px;
+}
+.project-upload summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.project-upload input {
+  display: block;
+  margin-block: 12px;
+}

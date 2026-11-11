@@ -31,9 +31,7 @@ export function CollectionPicker({
         onClose={() => setOpen(false)}
         title="Organize this project"
       >
-        <p className="modal-intro">
-          Choose one or more collections. Changes are saved on this device.
-        </p>
+        <p className="modal-intro">Choose one or more collections.</p>
         <div className="collection-pick-list">
           {active.map((c) => (
             <button
@@ -105,7 +103,7 @@ export function ResearchEditor({ projectId }: { projectId: string }) {
       <div className="panel-title">
         <div>
           <h3>Your research notes</h3>
-          <p>Private to this browser. No AI processing.</p>
+          <p>Saved to your private library.</p>
         </div>
         <Icon name="bookmark" size={17} />
       </div>
@@ -139,7 +137,7 @@ export function ResearchEditor({ projectId }: { projectId: string }) {
           disabled={!changed}
           onClick={() => {
             saveNote(projectId, { text, status });
-            notify("Research note saved on this device.");
+            notify("Research note saved.");
           }}
         >
           Save note
@@ -158,7 +156,7 @@ export function FollowCreator({ handle }: { handle: string }) {
       onClick={() => toggleFollow(handle)}
     >
       <Icon name={active ? "check" : "plus"} size={15} />
-      {active ? "Following locally" : "Follow creator"}
+      {active ? "Following" : "Follow creator"}
     </button>
   );
 }

@@ -96,8 +96,7 @@ export default function Plans() {
             fixed payment.
           </p>
           <Link className="back-link" href="/earnings">
-            Explore the creator earnings model{" "}
-            <Icon name="arrow" size={14} />
+            Explore the creator earnings model <Icon name="arrow" size={14} />
           </Link>
         </section>
         <section className="faq-list">
@@ -125,8 +124,8 @@ export default function Plans() {
           <details>
             <summary>Where are my saved projects stored?</summary>
             <p>
-              In this browser’s local storage. Saves are not synced to an
-              account or another device.
+              Signed-in libraries sync to your account. Anonymous saves stay in
+              this browser.
             </p>
           </details>
         </section>

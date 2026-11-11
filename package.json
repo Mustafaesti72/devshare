@@ -5,11 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node scripts/migrate.mjs && next start",
+    "start": "node scripts/migrate.mjs && node scripts/clean-media.mjs && next start",
     "lint": "eslint",
     "test:catalog": "node --experimental-strip-types --test tests/catalog.test.mjs",
     "test:smoke": "node --test tests/smoke.test.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/catalog.test.mjs tests/github-input.test.mjs tests/research-data.test.mjs tests/publishing.test.mjs tests/revenue.test.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/catalog.test.mjs tests/github-input.test.mjs tests/research-data.test.mjs tests/publishing.test.mjs tests/revenue.test.mjs tests/workspace.test.mjs",
     "revenue:rehearse": "node --experimental-strip-types scripts/rehearse.mjs",
     "assets:sync": "node scripts/sync-assets.mjs"
   },
@@ -18,7 +18,8 @@
     "next": "16.4.6",
     "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

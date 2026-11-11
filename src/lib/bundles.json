@@ -1,0 +1,39 @@
+[
+  {
+    "slug": "testing-workflows",
+    "name": "Testing workflows",
+    "description": "Browser automation, component checks, service mocks and accessibility checks for a test suite.",
+    "repos": [
+      "microsoft/playwright",
+      "vitest-dev/vitest",
+      "pytest-dev/pytest",
+      "mswjs/msw",
+      "dequelabs/axe-core"
+    ]
+  },
+  {
+    "slug": "data-workbench",
+    "name": "Data workbench",
+    "description": "Explore local SQL, dataframes, columnar formats and JSON transformations.",
+    "repos": [
+      "duckdb/duckdb",
+      "pola-rs/polars",
+      "pandas-dev/pandas",
+      "apache/arrow",
+      "jqlang/jq",
+      "sqlite/sqlite"
+    ]
+  },
+  {
+    "slug": "web-foundations",
+    "name": "Web foundations",
+    "description": "Find building blocks for content sites, reactive interfaces, request routing and Python APIs.",
+    "repos": [
+      "withastro/astro",
+      "sveltejs/svelte",
+      "honojs/hono",
+      "fastapi/fastapi",
+      "pallets/flask"
+    ]
+  }
+]

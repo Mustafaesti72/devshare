@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useStored } from "@/lib/browser-store";
 
+import { SyncStatus } from "./sync-status";
 import { AccountMenu } from "./account-menu";
 import { CommandMenu } from "./command-menu";
 import { Icon } from "./icon";
@@ -163,16 +164,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       {children}
+      <SyncStatus />
       <footer className="app-footer simple-footer">
         <span>DevShare</span>
         <div>
           <Link href="/blog">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <Link href="/pricing">Plans</Link>
           <Link href="/earnings">Creator earnings</Link>
           <Link href="/dashboard">Your dashboard</Link>
-          <Link href="/explore?sample=1">Sample catalog</Link>
         </div>
       </footer>
     </div>

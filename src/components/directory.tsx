@@ -390,7 +390,7 @@ export function Directory({
             <h2>From the maintainers</h2>
             {published.map((p) => (
               <article key={p.id}>
-                <a href={"https://github.com/" + p.full_name}>{p.full_name}</a>
+                <Link href={"/showcase/" + p.full_name}>{p.full_name}</Link>
                 <p>{p.summary}</p>
               </article>
             ))}
@@ -623,7 +623,9 @@ export function Directory({
   );
 }
 export function SourceBrief({ p }: { p: PublicRepository }) {
-  const sponsors = (funding as Record<string, {handles: string[]; source: string}>)[p.fullName];
+  const sponsors = (
+    funding as Record<string, { handles: string[]; source: string }>
+  )[p.fullName];
   const g = guide[p.name];
   const { references } = useSourceReferences();
   const saved = references.some((s) => s.id === p.id);
@@ -651,11 +653,24 @@ export function SourceBrief({ p }: { p: PublicRepository }) {
           <h2>From the repository</h2>
           <blockquote>{p.description}</blockquote>
           <a href={p.sourceUrl + "#readme"}>Read the maintainer’s README</a>
-          {sponsors && <section className="funding-links"><h2>Support the maintainers</h2>
-            <p>This repository lists the following GitHub Sponsors accounts.</p>
-            <ul>{sponsors.handles.map(handle => <li key={handle}><a href={`https://github.com/sponsors/${handle}`}>Sponsor @{handle} ↗</a></li>)}</ul>
-            <a href={sponsors.source}>View the repository’s funding file</a>
-          </section>}
+          {sponsors && (
+            <section className="funding-links">
+              <h2>Support the maintainers</h2>
+              <p>
+                This repository lists the following GitHub Sponsors accounts.
+              </p>
+              <ul>
+                {sponsors.handles.map((handle) => (
+                  <li key={handle}>
+                    <a href={`https://github.com/sponsors/${handle}`}>
+                      Sponsor @{handle} ↗
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <a href={sponsors.source}>View the repository’s funding file</a>
+            </section>
+          )}
         </section>
         <aside>
           <h2>Repository facts</h2>

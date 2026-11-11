@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { projects, projectPath } from "@/lib/catalog";
 import repositories from "@/lib/directory.json";
 import { Modal } from "./modal";
 import { Icon } from "./icon";
@@ -13,14 +12,18 @@ export function CommandMenu() {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const actions = [
-    ...repositories.map(p=>({name:p.fullName,detail:p.description,href:`/directory/${p.owner}/${p.name}`,icon:"git" as const})),
-    {name:"Submit a repository",detail:"Verify ownership and request publication",href:"/for-developers",icon:"plus" as const},
-    ...projects.map((p) => ({
-      name: p.name,
-      detail: "Sample project · "+p.tagline,
-      href: projectPath(p),
-      icon: "code" as const,
+    ...repositories.map((p) => ({
+      name: p.fullName,
+      detail: p.description,
+      href: `/directory/${p.owner}/${p.name}`,
+      icon: "git" as const,
     })),
+    {
+      name: "Submit a repository",
+      detail: "Verify ownership and request publication",
+      href: "/for-developers",
+      icon: "plus" as const,
+    },
     {
       name: "GitHub inspector",
       detail: "Read real public repository metadata",
@@ -40,8 +43,14 @@ export function CommandMenu() {
       icon: "folder" as const,
     },
     {
-      name: "Creator studio",
-      detail: "Analytics and publishing preview",
+      name: "Developer guides",
+      detail: "Practical engineering reading",
+      href: "/blog",
+      icon: "code" as const,
+    },
+    {
+      name: "Your dashboard",
+      detail: "Your profile, submissions and account access",
       href: "/dashboard",
       icon: "chart" as const,
     },
