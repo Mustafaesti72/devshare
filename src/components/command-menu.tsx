@@ -5,10 +5,26 @@ import { useRouter } from "next/navigation";
 import repositories from "@/lib/directory.json";
 import { Modal } from "./modal";
 import { Icon } from "./icon";
+type Publication = { id: number; full_name: string; summary: string };
 export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [published, setPublished] = useState<Publication[] | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    fetch("/api/discovery", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!controller.signal.aborted)
+          setPublished(Array.isArray(data?.projects) ? data.projects : []);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setPublished([]);
+      });
+    return () => controller.abort();
+  }, [open]);
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const actions = [
@@ -54,6 +70,12 @@ export function CommandMenu() {
       href: "/dashboard",
       icon: "chart" as const,
     },
+    ...(published || []).map((project) => ({
+      name: project.full_name,
+      detail: project.summary,
+      href: "/showcase/" + project.full_name,
+      icon: "git" as const,
+    })),
   ].filter((a) =>
     `${a.name} ${a.detail}`.toLowerCase().includes(query.toLowerCase()),
   );
@@ -103,7 +125,7 @@ export function CommandMenu() {
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setActive(Math.min(active + 1, actions.length - 1));
+                setActive(Math.max(0, Math.min(active + 1, actions.length - 1)));
               }
               if (e.key === "ArrowUp") {
                 e.preventDefault();
@@ -139,7 +161,9 @@ export function CommandMenu() {
             ))
           ) : (
             <div className="command-empty">
-              No results. Try a project name or “GitHub”.
+              {published === null
+                ? "Loading project results…"
+                : "No results. Try a project name or GitHub."}
             </div>
           )}
         </div>
