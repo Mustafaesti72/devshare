@@ -54,7 +54,7 @@ Use Node 24 and a persistent filesystem. The local SQLite database defaults to .
 
 ## Railway deployment
 
-Use Node 24. The Dockerfile builds the app and railway.json checks /api/health before accepting traffic. Mount one persistent volume at /data, set DEVSHARE_DATA_DIR=/data, PORT=3000, APP_URL to the public HTTPS origin and ALLOW_INDEXING=true. Set APP_URL before the build because metadata and sitemap routes are prerendered. Use one service replica with SQLite. Local .data files, environment secrets and node_modules are excluded from uploads.
+Use Node 24. The Dockerfile builds the app and  .railway/railway.ts checks /api/health before accepting traffic. Mount one persistent volume at /data, set DEVSHARE_DATA_DIR=/data, PORT=3000, APP_URL to the public HTTPS origin and ALLOW_INDEXING=true. Set APP_URL before the build because metadata and sitemap routes are prerendered. Use one service replica with SQLite. Local .data files, environment secrets and node_modules are excluded from uploads.
 
 Submissions require editorial approval. From a Railway service shell, run node scripts/review.mjs to list pending submissions and node scripts/review.mjs approved ID to publish a reviewed listing. Back up the persistent SQLite files using a SQLite-aware backup process before moving storage.
 
