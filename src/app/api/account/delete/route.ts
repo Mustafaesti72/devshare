@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser, sessionCookie, cookieOptions } from "@/lib/auth";
+import {
+  currentUser,
+  sessionCookie,
+  cookieOptions,
+  deletionCookie,
+} from "@/lib/auth";
 import { cleanMedia } from "@/lib/listing-images.mjs";
 import { deleteAccount } from "@/lib/accounts.mjs";
 import { siteUrl } from "@/lib/site";
@@ -24,7 +29,14 @@ export async function POST(request: NextRequest) {
     new URL("/login?deleted=true", siteUrl),
     303,
   );
-  response.cookies.set(sessionCookie, "", { ...cookieOptions, maxAge: 0 });
+  response.cookies.set(sessionCookie, "", {
+    ...cookieOptions,
+    maxAge: 0,
+  });
+  response.cookies.set(deletionCookie, user.id, {
+    ...cookieOptions,
+    maxAge: 60,
+  });
   response.headers.set("Cache-Control", "no-store");
   return response;
 }

@@ -243,3 +243,14 @@ if (typeof window !== "undefined") {
     if (document.visibilityState === "visible") void hydrate();
   }, 30000);
 }
+
+export function clearAccountCache(id: string) {
+  const prefix = "devshare:" + id + ":";
+  for (const key of memory.keys())
+    if (key.startsWith(prefix)) memory.delete(key);
+  try {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith(prefix)) localStorage.removeItem(key);
+  } catch {}
+  emit();
+}
