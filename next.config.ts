@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: { remotePatterns: [{protocol:"https",hostname:"avatars.githubusercontent.com"}] },
   turbopack: { root: process.cwd() },
   outputFileTracingRoot: process.cwd(),
   async headers() {

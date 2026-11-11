@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { siteUrl, indexable } from "@/lib/site";
 import { WorkspaceProvider, Shell } from "@/components/workspace";
 import "./globals.css";
+import "./account.css";
 import "./workbench.css";
 import "./directory.css";
 import { ResearchProvider } from "@/lib/research";

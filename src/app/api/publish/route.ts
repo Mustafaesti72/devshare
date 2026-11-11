@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { currentUser } from "@/lib/auth";
 import { siteUrl } from "@/lib/site";
 import { parseRepository } from "@/lib/github-input";
 import { startProof, getProof, submit, reserveAttempt } from "@/lib/submissions.mjs";
@@ -29,6 +30,22 @@ export async function POST(request: NextRequest) {
     return fail("Invalid form.", 400);
   }
   if (!data || typeof data !== "object") return fail("Invalid form.", 400);
+  if (data.action === "account-submit") {
+    try {
+      const user = await currentUser();
+      if (!user) return fail("Sign in to submit this repository.", 401);
+      const parsed = parseRepository(typeof data.repo === "string" ? data.repo : "");
+      const summary = typeof data.summary === "string" ? data.summary.trim() : "";
+      if (!parsed || summary.length < 40 || summary.length > 1000) return fail("Enter a public repository and a description of 40 to 1000 characters.", 400);
+      const response = await github("repos/" + parsed.owner + "/" + parsed.repo);
+      if (!response.ok) return fail("GitHub could not confirm this repository. Try again later.", 422);
+      const repo = await response.json();
+      if (repo.private !== false || repo.owner?.type !== "User" || repo.owner?.id !== user.github_id) return fail("Choose a public repository owned by your signed-in GitHub account.", 403);
+      const proof = await startProof(repo.full_name);
+      await submit(proof.token, repo, summary);
+      return NextResponse.json({status:"pending", name:repo.full_name});
+    } catch { return fail("Submission could not finish. Try again later.", 503); }
+  }
   if (data.action === "start") {
     const repo = parseRepository(
       typeof data.repo === "string" ? data.repo : "",

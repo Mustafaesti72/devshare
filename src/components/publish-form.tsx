@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-export function PublishForm() {
+export function PublishForm({signedIn=false}:{signedIn?:boolean}) {
   const [repo, setRepo] = useState(""),
     [phrase, setPhrase] = useState(""),
     [gist, setGist] = useState(""),
@@ -17,7 +17,7 @@ export function PublishForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: phrase ? "verify" : "start",
+          action: signedIn ? "account-submit" : phrase ? "verify" : "start",
           repo,
           gist,
           summary,
@@ -56,9 +56,9 @@ export function PublishForm() {
           placeholder="owner/repository"
         />
       </label>
-      {phrase && (
+      {(phrase || signedIn) && (
         <>
-          <p>
+          {!signedIn && <><p>
             Create a public Gist in your repository owner account. Name the file{" "}
             <code>devshare.txt</code> and paste this one-time phrase. It expires
             in 15 minutes.
@@ -76,6 +76,7 @@ export function PublishForm() {
               onChange={(e) => setGist(e.target.value)}
             />
           </label>
+          </>}
           <label>
             What can someone build with your project?
             <textarea
@@ -93,7 +94,9 @@ export function PublishForm() {
       <button className="btn primary" disabled={busy}>
         {busy
           ? "Checking…"
-          : phrase
+          : signedIn
+            ? "Submit for review"
+            : phrase
             ? "Verify and submit for review"
             : "Start ownership verification"}
       </button>

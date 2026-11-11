@@ -12,7 +12,13 @@ export function initialize() {
       CREATE TABLE IF NOT EXISTS reviews(id BIGINT NOT NULL, action TEXT NOT NULL, at BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS data_migrations(name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE INDEX IF NOT EXISTS listings_status_submitted ON listings(status, submitted DESC);
-      CREATE INDEX IF NOT EXISTS proofs_expiry ON proofs(expires);`);
+      CREATE INDEX IF NOT EXISTS proofs_expiry ON proofs(expires);
+      CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY,github_id BIGINT NOT NULL UNIQUE,github_login TEXT NOT NULL,display_name TEXT NOT NULL,bio TEXT NOT NULL DEFAULT '',website TEXT NOT NULL DEFAULT '',avatar_url TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires BIGINT NOT NULL);
+      CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+      CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires);
+      CREATE TABLE IF NOT EXISTS oauth_flows(state_hash TEXT PRIMARY KEY,verifier TEXT NOT NULL,expires BIGINT NOT NULL);
+      CREATE INDEX IF NOT EXISTS oauth_expiry ON oauth_flows(expires);`);
   }).catch(error => { initializing = undefined; throw error; });
   return initializing;
 }

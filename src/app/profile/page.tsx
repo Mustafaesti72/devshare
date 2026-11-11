@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/auth";
+import { ProfileForm } from "@/components/profile-form";
+export const metadata={title:"Edit profile",robots:{index:false,follow:false}};
+export default async function Profile({searchParams}:{searchParams:Promise<{error?:string}>}){const {error}=await searchParams;const user=await currentUser();if(!user)redirect("/login");return <main id="main" className="directory account-page"><Link href="/dashboard">← Your dashboard</Link><header className="account-heading"><h1>Edit profile</h1><Link href={"/members/"+user.id}>View public profile →</Link></header><ProfileForm user={user}/><section className="account-security"><h2>Delete account</h2><p>This removes your profile, active sessions and repository submissions from DevShare.</p>{error&&<p role="alert">Type your GitHub username exactly to confirm deletion.</p>}<form className="profile-form" method="post" action="/api/account/delete"><label>Type {user.github_login} to confirm<input name="confirm" required autoComplete="off"/></label><button className="btn">Delete my account</button></form></section><p className="account-note">GitHub account @{user.github_login} verifies your identity. Repository ownership is checked separately for every submission.</p></main>}

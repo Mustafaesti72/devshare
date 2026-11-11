@@ -68,3 +68,9 @@ Railway Postgres stores repository ownership challenges, submissions and moderat
 Railway devshare-assets stores the 52 catalog PNGs under owners/. The application reads them through /api/media/[name] with a catalog allowlist, cache headers and conditional requests. Bucket credentials stay on the server. Run npm run assets:sync to upload and byte-verify the catalog images. User-provided image uploads are not exposed by this release.
 
 Run node scripts/check-storage.mjs inside the deployed service to test PostgreSQL concurrency and moderation in an isolated temporary schema, and to verify a bucket image. The temporary schema is removed after the check. Run node scripts/review.mjs inside the service to moderate real submissions.
+
+## Accounts
+
+GitHub OAuth uses state and PKCE (S256), an exact callback URL and public identity access. GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET belong in Railway server variables. The callback exchanges the authorization code, reads the GitHub identity and creates a random session. Provider access tokens are not persisted. Sessions are stored hashed in PostgreSQL and delivered as secure HTTP-only cookies, with 30-day expiry and a ten-device limit.
+
+Users can edit their public profile, submit repositories they own, view review status, sign out on one or all devices and delete their account. Deleting an account removes live profile, sessions, submissions and moderation records for its repositories. Browser research data remains local. Public member pages use stable UUIDs and currently carry noindex while community moderation develops.

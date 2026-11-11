@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useStored } from "@/lib/browser-store";
 
+import { AccountMenu } from "./account-menu";
 import { CommandMenu } from "./command-menu";
 import { Icon } from "./icon";
 
@@ -148,6 +149,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
           <CommandMenu />
+          <AccountMenu />
           <button
             className="icon-button"
             onClick={() => setAppearance(dark ? "light" : "dark")}
@@ -165,9 +167,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <span>DevShare</span>
         <div>
           <Link href="/blog">Guides</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <Link href="/pricing">Plans</Link>
           <Link href="/earnings">Creator earnings</Link>
-          <Link href="/dashboard">Demo studio</Link>
+          <Link href="/dashboard">Your dashboard</Link>
           <Link href="/explore?sample=1">Sample catalog</Link>
         </div>
       </footer>

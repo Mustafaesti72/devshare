@@ -7,7 +7,7 @@ for (const [route, text] of [
   ["/projects/studio-example/formwork", "Forms that fit your product."],
   ["/developers/studio-example", "Ownership not verified"],
   ["/collections/shipping-a-saas", "Shipping a SaaS"],
-  ["/dashboard", "DEMO WORKSPACE"],
+  ["/login", "Your projects."],
   ["/for-developers", "Start ownership verification"],
   ["/pricing", "Plans"],
   ["/earnings", "Estimate a creator share"],

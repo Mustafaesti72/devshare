@@ -1,7 +1,9 @@
+import { currentUser } from "@/lib/auth";
 import Link from "next/link";
 import { PublishForm } from "@/components/publish-form";
 export const metadata = { title: "Submit a repository" };
-export default function Creators() {
+export default async function Creators() {
+  const user = await currentUser();
   return (
     <main id="main" className="directory">
       <header className="dir-title">
@@ -12,7 +14,8 @@ export default function Creators() {
         Personal GitHub repositories are eligible for editorial review.
       </p>
       <p><Link className="back-link" href="/earnings">How maintainers can earn →</Link></p>
-      <PublishForm />
+      {!user && <p><Link href="/login">Sign in with GitHub</Link> to submit your own repositories directly, or use Gist verification below.</p>}
+      <PublishForm signedIn={!!user} />
     </main>
   );
 }
