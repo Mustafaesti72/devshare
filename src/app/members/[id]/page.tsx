@@ -1,4 +1,4 @@
-import { indexable } from "@/lib/site";
+import { siteUrl, indexable } from "@/lib/site";
 import { FollowCreator } from "@/components/research-actions";
 import { currentUser } from "@/lib/auth";
 import Image from "next/image";
@@ -15,6 +15,10 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: user.display_name + "’s profile",
     description: user.bio || "Developer on DevShare",
+    openGraph: {
+      title: user.display_name + " on DevShare",
+      description: user.bio || "Developer projects and maintainer profile",
+    },
     alternates: { canonical: "/members/" + user.id },
     robots: { index: indexable && projects.length > 0, follow: true },
   };
@@ -44,6 +48,11 @@ export default async function Member({ params }: Props) {
         </div>
       </header>
       <div className="account-actions">
+        {viewer?.id === user.id && (
+          <Link className="btn" href="/profile">
+            Edit your profile
+          </Link>
+        )}
         {viewer?.id !== user.id && (
           <FollowCreator handle={"member:" + user.id} />
         )}
@@ -57,6 +66,23 @@ export default async function Member({ params }: Props) {
           </a>
         </p>
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: user.display_name,
+            url: new URL("/members/" + user.id, siteUrl).href,
+            image: user.avatar_url,
+            description: user.bio || undefined,
+            sameAs: [
+              "https://github.com/" + user.github_login,
+              ...(user.website ? [user.website] : []),
+            ],
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <section>
         <h2>Published repositories</h2>
         {projects.length ? (

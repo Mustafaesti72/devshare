@@ -4,6 +4,7 @@ import {
   createHash,
   timingSafeEqual,
 } from "node:crypto";
+import { memberIds } from "./member-data.ts";
 import { pool, initialize, transaction } from "./postgres.mjs";
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
 export function sameState(a, b) {
@@ -188,4 +189,18 @@ export async function deleteAccount(id) {
     await c.query("DELETE FROM listings WHERE owner_id=$1", [user.github_id]);
     await c.query("DELETE FROM users WHERE id=$1", [id]);
   });
+}
+
+export async function publicMembers(ids) {
+  if (!Array.isArray(ids) || !ids.every((id) => typeof id === "string"))
+    throw new Error("Invalid profile IDs");
+  const selected = memberIds(ids.join(","));
+  if (!selected.length || !process.env.DATABASE_URL) return [];
+  await initialize();
+  return (
+    await pool.query(
+      "SELECT id,github_login,display_name,avatar_url,left(bio,180) AS bio FROM users WHERE id=ANY($1::uuid[]) AND NOT is_hidden",
+      [selected],
+    )
+  ).rows;
 }

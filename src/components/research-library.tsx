@@ -17,7 +17,7 @@ import { Icon } from "./icon";
 import { Modal } from "./modal";
 import { ProjectCard, ProjectMark } from "./project-card";
 import { ProjectVisual } from "./project-visual";
-import { FollowCreator } from "./research-actions";
+import { FollowedMaintainers } from "./followed-maintainers";
 import { ResearchEditor } from "./research-actions";
 export function CollectionWorkspace() {
   const { collections, createCollection, updateCollection } = useResearch();
@@ -504,7 +504,8 @@ export function PersonalCollectionPage({ id }: { id: string }) {
 export function ResearchLibrary() {
   const { saved, toggleSave } = useWorkspace();
   const { references } = useSourceReferences();
-  const { notes, collections, following } = useResearch();
+  const { notes, collections } = useResearch();
+  const sync = useWorkspaceSync();
   const [query, setQuery] = useState("");
   const [view, setView] = useStored("drp-library-view", "list");
   const [status, setStatus] = useState("");
@@ -536,27 +537,7 @@ export function ResearchLibrary() {
           Find projects
         </Link>
       </div>
-      {following.length > 0 && (
-        <section className="followed-maintainers">
-          <h2>Followed maintainers</h2>
-          {following.map((handle) => (
-            <div key={handle}>
-              <Link
-                href={
-                  handle.startsWith("member:")
-                    ? "/members/" + handle.slice(7)
-                    : "/developers/" + handle
-                }
-              >
-                {handle.startsWith("member:")
-                  ? "View maintainer profile"
-                  : handle}
-              </Link>
-              <FollowCreator handle={handle} />
-            </div>
-          ))}
-        </section>
-      )}
+      <FollowedMaintainers />
       <div className="library-filterbar">
         <div className="search-field">
           <Icon name="search" size={17} />
@@ -596,7 +577,26 @@ export function ResearchLibrary() {
           </button>
         </div>
       </div>
-      {list.length || sourceList.length ? (
+      {!sync || (sync.loading && !saved.length && !references.length) ? (
+        <div className="empty-state" role="status">
+          <h2>Loading your library…</h2>
+          <p>
+            Your saved projects will appear when your account and library are
+            ready.
+          </p>
+        </div>
+      ) : sync.error && !saved.length && !references.length ? (
+        <div className="empty-state" role="status">
+          <h2>Library temporarily unavailable</h2>
+          <p>
+            Your saved projects have not been removed. Retry the connection to
+            load your library.
+          </p>
+          <button className="btn" onClick={retryWorkspaceSync}>
+            Retry loading
+          </button>
+        </div>
+      ) : list.length || sourceList.length ? (
         view === "board" ? (
           <div className="research-board">
             {[

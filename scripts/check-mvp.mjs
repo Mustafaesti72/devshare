@@ -37,6 +37,17 @@ try {
     avatar_url: "https://avatars.githubusercontent.com/u/991",
   });
   const user = await accounts.sessionUser(session);
+  const publicBatch = await accounts.publicMembers([user.id, user.id]);
+  assert.equal(publicBatch.length, 1);
+  assert.equal(publicBatch[0].display_name, "MVP Check");
+  assert.deepEqual(Object.keys(publicBatch[0]).sort(), [
+    "avatar_url",
+    "bio",
+    "display_name",
+    "github_login",
+    "id",
+  ]);
+
   const workspace = await import("../src/lib/workspace.mjs");
   const catalog = JSON.parse(
     await readFile(
@@ -186,6 +197,7 @@ try {
     true,
   );
   assert.equal(await accounts.publicProfile(user.id), null);
+  assert.deepEqual(await accounts.publicMembers([user.id]), []);
   assert.equal(await publishing.publishedProject("mvp-check/tool"), null);
   assert.equal(
     await profiles.reviewProfile(
@@ -235,6 +247,7 @@ try {
   assert.equal((await apiLimit(req, "mvp-check", { limit: 2 })).status, 429);
   await engagement.cleanEngagement();
   await accounts.deleteAccount(user.id);
+  assert.deepEqual(await accounts.publicMembers([user.id]), []);
   assert.equal(
     (await db.pool.query("SELECT count(*)::int AS n FROM engagement_daily"))
       .rows[0].n,
@@ -244,6 +257,7 @@ try {
     JSON.stringify({
       schemaIsolation: "passed",
       largeSourceLibrary: "passed",
+      publicProfiles: "passed",
       publicationMetadata: "passed",
       analyticsDeduplication: "passed",
       tokenReplay: "passed",

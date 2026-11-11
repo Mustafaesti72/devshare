@@ -200,3 +200,54 @@
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
+
+.account-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.account-menu .plain-button {
+  font-size: 12px;
+}
+.followed-maintainers h2 > span {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 14px;
+  margin-left: 8px;
+}
+.followed-maintainer {
+  gap: 20px;
+}
+.followed-maintainer-profile {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.followed-maintainer-profile img {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.followed-maintainer-profile strong,
+.followed-maintainer-profile small {
+  display: block;
+}
+.followed-maintainer-profile small {
+  color: var(--muted);
+  margin-top: 4px;
+}
+.followed-maintainer-profile p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  max-width: 550px;
+  overflow-wrap: anywhere;
+}
+.followed-maintainer-missing {
+  color: var(--muted);
+  font-size: 13px;
+}
+.followed-maintainer > .btn {
+  flex-shrink: 0;
+}

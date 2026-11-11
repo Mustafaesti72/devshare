@@ -50,3 +50,7 @@ export function userProjects(
 ): Promise<UserProject[]>;
 
 export function deleteAccount(id: string): Promise<void>;
+
+export function publicMembers(
+  ids: string[],
+): Promise<import("./member-data").PublicMember[]>;

@@ -19,9 +19,9 @@ Without DATABASE_URL, the public catalog and repository submission proof flow us
 - 52 real, dated GitHub repository snapshots with source links, language, license and repository facts.
 - Search by keyword, category, language and license; compare up to three repositories. The most-starred view uses recorded GitHub counts.
 - Six engineering guides, three reading lists and four category pages.
-- GitHub sign-in, editable public profiles, account deletion and device/session controls.
+- GitHub sign-in, editable public profiles, account deletion and device/session controls. Account lookup failures offer a retry without switching private storage to an anonymous scope.
 - Personal public repository submissions verified against the signed-in GitHub numeric owner ID. Anonymous maintainers can alternatively prove ownership with a one-time public Gist challenge.
-- Private saved sources, notes, collections and maintainer follows, synced across devices with conflict handling and offline retry. Libraries hold up to 500 sources; capacity errors preserve existing entries. Collections can select directly from the real directory.
+- Private saved sources, notes, collections and maintainer follows, synced across devices with conflict handling and offline retry. Followed maintainers show names, GitHub handles and avatars; hidden or deleted profiles show an unavailable state without a broken link. Libraries hold up to 500 sources; capacity errors preserve existing entries. Collections can select directly from the real directory.
 - Project cover upload, replacement and deletion; edit/resubmit and withdrawal controls.
 - Editorial review, private reports, profile moderation and recorded reviewer notes. Stale revisions are rejected.
 - Consent-based project visits and GitHub click counts, with today, 7-day and 30-day dashboard views. Visitor estimates, saves and followers are aggregate activity, not earnings.
@@ -66,6 +66,6 @@ npm run build
 npm run test:smoke
 ```
 
-scripts/check-mvp.mjs requires a PostgreSQL test connection. It creates and verifies its own random mvp_check_* schema, exercises publication metadata, analytics deduplication, report resolution, profile moderation, stale revisions, request limits and deletion cascades, then removes that schema. GitHub Actions runs this against a fresh PostgreSQL service.
+scripts/check-mvp.mjs requires a PostgreSQL test connection. It creates and verifies its own random mvp*check*\* schema, exercises publication metadata, analytics deduplication, report resolution, profile moderation, stale revisions, request limits and deletion cascades, then removes that schema. GitHub Actions runs this against a fresh PostgreSQL service.
 
 scripts/check-storage.mjs separately checks sessions, ownership proofs, library concurrency and cover storage in an isolated random schema and its own temporary bucket keys. Run it inside the deployed service when validating storage changes. Neither diagnostic intentionally modifies production records.
