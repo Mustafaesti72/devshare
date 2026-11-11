@@ -360,6 +360,22 @@ export function Directory({
   if (sort === "stars") rows.sort((a, b) => b.stars - a.stars);
   if (sort === "updated")
     rows.sort((a, b) => b.pushedAt.localeCompare(a.pushedAt));
+  const community =
+    group === "All"
+      ? published.filter((project) =>
+          (project.full_name + " " + project.summary)
+            .toLowerCase()
+            .includes(query.trim().toLowerCase()),
+        )
+      : [];
+  const total = new Set([
+    ...records.map((project) => project.id),
+    ...published.map((project) => project.id),
+  ]).size;
+  const resultCount = new Set([
+    ...rows.map((project) => project.id),
+    ...community.map((project) => project.id),
+  ]).size;
   const [selected, setSelected] = useState<number[]>([]);
   const [compare, setCompare] = useState(false);
   const picks = records.filter((p) => selected.includes(p.id));
@@ -379,16 +395,16 @@ export function Directory({
         <header className="feed-heading">
           <div>
             <h1>Open source index</h1>
-            <p>{records.length} public repositories</p>
+            <p>{total} public repositories</p>
           </div>
           <Link href="/inspect">
             Inspect a GitHub URL <Icon name="arrow" size={15} />
           </Link>
         </header>
-        {published.length > 0 && (
+        {community.length > 0 && (
           <section className="published-list">
             <h2>From the maintainers</h2>
-            {published.map((p) => (
+            {community.map((p) => (
               <article key={p.id}>
                 <Link href={"/showcase/" + p.full_name}>{p.full_name}</Link>
                 <p>{p.summary}</p>
@@ -428,7 +444,7 @@ export function Directory({
                   {g === "All" ? "All projects" : g}
                 </button>
               ))}
-              <span>{rows.length} results</span>
+              <span>{resultCount} results</span>
             </div>
             {rows.map((p) => (
               <article className="feed-item" key={p.id}>

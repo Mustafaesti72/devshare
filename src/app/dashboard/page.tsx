@@ -63,7 +63,7 @@ export default async function Dashboard({
                   </span>
                 </div>
                 <p>{p.summary}</p>
-                {p.feedback && <p>Editor feedback — {p.feedback}</p>}
+                {p.feedback && <p>Latest update — {p.feedback}</p>}
                 {p.status === "approved" && (
                   <p>
                     <Link href={"/showcase/" + p.full_name}>
