@@ -7,6 +7,10 @@ export type User = {
   website: string;
   avatar_url: string;
   created_at: string;
+  is_hidden: boolean;
+  moderation_note: string;
+  profile_revision: number;
+  review_requested: boolean;
 };
 export type UserProject = {
   id: number;
@@ -17,6 +21,7 @@ export type UserProject = {
   revision: number;
   has_image?: boolean;
   feedback?: string;
+  category?: string;
 };
 export function sameState(a: unknown, b: unknown): boolean;
 export function safeWebsite(value: unknown): string;

@@ -45,7 +45,7 @@ Architecture: docs/FOUNDATION.md. Iteration record: docs/WORKBENCH.md.
 
 ## Public directory and submissions
 
-The homepage contains 52 dated GitHub snapshots. The inspector fetches current metadata. Source briefs identify the upstream project and link to its README. The sample catalog remains available at /explore.
+The homepage contains 52 dated GitHub snapshots. The inspector fetches current metadata. Source briefs identify the upstream project and link to its README. Explore, category pages and the most-starred list use these real repositories and approved maintainer publications.
 
 On /for-developers a maintainer can request a 15-minute challenge for a personal public repository. The browser keeps an HTTP-only challenge cookie. The maintainer publishes the phrase in devshare.txt in a GitHub Gist. The server checks the Gist owner's numeric GitHub ID against the repository owner and consumes the challenge in the same transaction that records the submission.
 
@@ -71,12 +71,24 @@ Run node scripts/check-storage.mjs inside the deployed service to test PostgreSQ
 
 GitHub OAuth uses state and PKCE (S256), an exact callback URL and public identity access. GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET belong in Railway server variables. The callback exchanges the authorization code, reads the GitHub identity and creates a random session. Provider access tokens are not persisted. Sessions are stored hashed in PostgreSQL and delivered as secure HTTP-only cookies, with 30-day expiry and a ten-device limit.
 
-Users can edit their public profile, submit repositories they own, view review status, sign out on one or all devices and delete their account. Deleting an account removes live profile, sessions, submissions and moderation records for its repositories. Signed-in research data syncs to PostgreSQL. Public member pages use stable UUIDs and currently carry noindex while community moderation develops.
+Users can edit their public profile, submit repositories they own, view review status, sign out on one or all devices and delete their account. Deleting an account removes live profile, sessions, submissions and moderation records for its repositories. Signed-in research data syncs to PostgreSQL. Public member pages use stable UUIDs. Profiles with approved projects can be indexed; empty profiles remain noindex.
 
 ## Library sync and moderation
 
 /api/workspace stores account-scoped saves, repository references, notes, collections and follows. Updates merge against the last cloud value under a PostgreSQL transaction. Independent changes merge. Overlapping edits return a conflict and the client asks which version to keep. Offline edits stay in the account's browser cache and retry when the service is reachable.
 
-Set ADMIN_GITHUB_IDS to the numeric GitHub IDs allowed to use /moderation. A review checks the submission timestamp to prevent publishing a version changed during review. Published projects appear at /showcase/owner/repo, on member profiles and in the sitemap. Hidden listings have no public project page.
+Set ADMIN_GITHUB_IDS to the numeric GitHub IDs allowed to use /moderation. A review checks the submission revision to prevent publishing a version changed during review. Published projects appear at /showcase/owner/repo, on member profiles and in the sitemap. Hidden listings have no public project page.
 
 Project covers accept still PNG, JPEG or WebP files under 4 MB and 20 megapixels. Sharp converts them to bounded WebP images. Each cover is stored privately in S3-compatible Railway storage. Pending covers are visible to the owner and moderators. Replacement and deletion create durable cleanup entries. Account deletion cascades through private library data and queues cover cleanup.
+
+## Discovery, reports and activity
+
+The directory merges recorded GitHub metadata with approved maintainer publications. Search supports category, language and license; the star ranking explicitly uses dated snapshots. Unspecified licenses are shown as requiring source review.
+
+Signed-in members can privately report projects or profiles. Moderators resolve reports and review profiles from /moderation. Profile hiding also hides its published and pending projects. Profile restoration does not automatically republish those projects. Review notes and reviewer IDs are stored in audit tables, and stale profile revisions are rejected.
+
+Published project pages ask for analytics consent before creating a browser-session identifier or sending an event. Signed page tokens expire after one hour. Receipts prevent token replay and per-project, per-day hashed identifiers deduplicate counts. Dashboards offer today, 7-day and 30-day periods, repository clicks, approximate visitors, current saves and follower counts. No revenue is inferred. Fine-grained records expire after 35 days; daily totals remain. Rate limits use short-lived keyed hashes without storing raw IPs. The background worker prunes records and retries image cleanup every minute.
+
+Run DATABASE_URL=... node --experimental-strip-types scripts/check-mvp.mjs against a PostgreSQL test connection. It creates and verifies its own random schema, exercises actual queries, and drops that schema on completion. It never needs production credentials or S3. scripts/check-storage.mjs separately tests the production adapter in an isolated schema and its own temporary bucket keys.
+
+GOOGLE_SITE_VERIFICATION supplies the public Search Console HTML-tag token at build time. Set it before rebuilding. The sitemap includes real catalog projects, reviewed community projects, populated public profiles, four categories, the star ranking, guides and reading lists. Live payment collection and developer payouts remain disabled.

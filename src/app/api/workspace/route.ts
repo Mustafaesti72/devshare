@@ -1,3 +1,4 @@
+import { apiLimit } from "@/lib/api-limit.mjs";
 import { currentUser } from "@/lib/auth";
 import { readWorkspace, writeWorkspace } from "@/lib/workspace.mjs";
 import { siteUrl } from "@/lib/site";
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
       { error: "Sign in to sync your library." },
       { status: 401, headers },
     );
+  const limited = await apiLimit(request, "workspace", {
+    identity: user.id,
+    limit: 120,
+  });
+  if (limited) return limited;
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return Response.json(
       { error: "JSON is required." },

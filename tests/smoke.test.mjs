@@ -15,7 +15,8 @@ for (const [route, text] of [
   ["/inspect", "Inspect a repository"],
   ["/saved", "My library"],
   ["/collections", "<h1>Collections</h1>"],
-  ["/topics/ai-ml", "Indexroom"],
+  ["/topics/testing", "Testing tools"],
+  ["/trending", "Most-starred tools"],
 ]) {
   test(`${route} supplies server HTML and preview noindex`, async () => {
     const response = await fetch(base + route);
@@ -36,7 +37,7 @@ test("query input renders as text and cannot create a script element", async () 
   const html = await response.text();
   assert.equal(response.status, 200);
   assert.ok(!html.includes('<script id="injected">'));
-  assert.ok(html.includes("No projects match those filters."));
+  assert.ok(html.includes("No matching projects."));
 });
 test("preview stays outside crawling and sitemaps", async () => {
   const robots = await (await fetch(base + "/robots.txt")).text();
@@ -62,7 +63,7 @@ test("shared search restores its server-rendered language and license filters", 
   );
   const html = await response.text();
   assert.equal(response.status, 200);
-  assert.ok(html.includes('aria-label="Save Indexroom"'));
+  assert.ok(html.includes('aria-label="Save pytest"'));
   assert.ok(!html.includes('aria-label="Save Formwork"'));
-  assert.ok(html.includes("list-layout"));
+  assert.ok(html.includes("Language and license"));
 });

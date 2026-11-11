@@ -26,7 +26,7 @@ export function safeWebsite(value) {
   return url.href;
 }
 const fields =
-  "u.id,u.github_id::float8 AS github_id,u.github_login,u.display_name,u.bio,u.website,u.avatar_url,u.created_at";
+  "u.id,u.github_id::float8 AS github_id,u.github_login,u.display_name,u.bio,u.website,u.avatar_url,u.created_at,u.is_hidden,u.moderation_note,u.profile_revision::float8 AS profile_revision,u.review_requested";
 export async function startLogin() {
   await initialize();
   const state = randomBytes(32).toString("hex"),
@@ -137,8 +137,12 @@ export async function publicProfile(id) {
     return null;
   await initialize();
   return (
-    (await pool.query(`SELECT ${fields} FROM users u WHERE id=$1`, [id]))
-      .rows[0] || null
+    (
+      await pool.query(
+        `SELECT ${fields} FROM users u WHERE id=$1 AND is_hidden=FALSE`,
+        [id],
+      )
+    ).rows[0] || null
   );
 }
 export async function updateProfile(id, input) {
@@ -152,7 +156,7 @@ export async function updateProfile(id, input) {
   const website = safeWebsite(input.website);
   await initialize();
   await pool.query(
-    "UPDATE users SET display_name=$1,bio=$2,website=$3 WHERE id=$4",
+    "UPDATE users SET display_name=$1,bio=$2,website=$3,profile_revision=profile_revision+1,review_requested=is_hidden WHERE id=$4",
     [displayName, bio, website, id],
   );
 }
@@ -160,7 +164,7 @@ export async function userProjects(githubId, publicOnly = false) {
   await initialize();
   return (
     await pool.query(
-      `SELECT id::float8 AS id,full_name,summary,status,submitted::float8 AS submitted,revision::float8 AS revision,EXISTS(SELECT 1 FROM listing_images WHERE listing_id=listings.id) AS has_image,(SELECT reason FROM moderation_events WHERE listing_id=listings.id AND at>=listings.submitted ORDER BY at DESC LIMIT 1) AS feedback FROM listings WHERE owner_id=$1 AND ${publicOnly ? "status='approved'" : "status IN ('approved','pending','hidden','withdrawn')"} ORDER BY submitted DESC LIMIT 100`,
+      `SELECT id::float8 AS id,full_name,summary,category,status,submitted::float8 AS submitted,revision::float8 AS revision,EXISTS(SELECT 1 FROM listing_images WHERE listing_id=listings.id) AS has_image,(SELECT reason FROM moderation_events WHERE listing_id=listings.id AND at>=listings.submitted ORDER BY at DESC LIMIT 1) AS feedback FROM listings WHERE owner_id=$1 AND ${publicOnly ? "status='approved'" : "status IN ('approved','pending','hidden','withdrawn')"} ORDER BY submitted DESC LIMIT 100`,
       [githubId],
     )
   ).rows;

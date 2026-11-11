@@ -14,7 +14,9 @@ export default async function Creators({
 }) {
   const user = await currentUser();
   const params = await searchParams;
-  const parsed = parseRepository(typeof params.repo === "string" ? params.repo : "");
+  const parsed = parseRepository(
+    typeof params.repo === "string" ? params.repo : "",
+  );
   const repo = parsed ? parsed.owner + "/" + parsed.repo : "";
   const existing =
     user && repo
@@ -47,6 +49,7 @@ export default async function Creators({
         signedIn={!!user}
         initialRepo={repo}
         initialSummary={existing?.summary || ""}
+        initialCategory={existing?.category || "Tooling"}
       />
     </main>
   );

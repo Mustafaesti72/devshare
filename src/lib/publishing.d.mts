@@ -8,6 +8,8 @@ export type PublishedProject = {
   creator_id?: string;
   creator_name?: string;
   published_at?: number;
+  repository?: import("./github-input").PublicRepository;
+  category?: string;
 };
 export type Review = {
   id: number;
@@ -38,3 +40,5 @@ export function withdrawProject(
   ownerId: number,
   revision: number,
 ): Promise<boolean>;
+
+export function publishedMembers(): Promise<{ id: string }[]>;

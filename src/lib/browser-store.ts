@@ -40,7 +40,7 @@ function persist(key: string, value: string) {
   } catch {}
 }
 function scopedKey(key: string) {
-  if (key === "drp-theme") return key;
+  if (key === "drp-theme" || key === "drp-analytics-consent") return key;
   if (accountScope === undefined) return undefined;
   return accountScope ? `devshare:${accountScope}:${key}` : key;
 }

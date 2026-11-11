@@ -12,10 +12,10 @@ export async function publishedProject(fullName) {
   return (
     (
       await pool.query(
-        `SELECT l.id::float8 AS id,l.full_name,l.summary,l.submitted::float8 AS submitted,l.revision::float8 AS revision,
+        `SELECT l.id::float8 AS id,l.full_name,l.summary,l.repository,l.category,l.submitted::float8 AS submitted,l.revision::float8 AS revision,
     EXISTS(SELECT 1 FROM listing_images WHERE listing_id=l.id) AS has_image,u.id AS creator_id,u.display_name AS creator_name,
     (SELECT max(r.at)::float8 FROM reviews r WHERE r.id=l.id AND r.action='approved') AS published_at
-    FROM listings l LEFT JOIN users u ON u.github_id=l.owner_id WHERE lower(l.full_name)=lower($1) AND l.status='approved'`,
+    FROM listings l LEFT JOIN users u ON u.github_id=l.owner_id WHERE lower(l.full_name)=lower($1) AND l.status='approved' AND COALESCE(u.is_hidden,FALSE)=FALSE`,
         [fullName],
       )
     ).rows[0] || null
@@ -45,7 +45,7 @@ export async function moderate(id, revision, action, reason, reviewerId) {
   await initialize();
   return transaction(async (c) => {
     const updated = await c.query(
-      "UPDATE listings SET status=$1,revision=revision+1 WHERE id=$2 AND revision=$3 AND status IN ('pending','approved','hidden') RETURNING id",
+      "UPDATE listings SET status=$1,revision=revision+1 WHERE id=$2 AND revision=$3 AND status IN ('pending','approved','hidden') AND ($1='hidden' OR NOT EXISTS(SELECT 1 FROM users WHERE github_id=listings.owner_id AND is_hidden)) RETURNING id",
       [action, id, revision],
     );
     if (!updated.rowCount) return false;
@@ -57,6 +57,15 @@ export async function moderate(id, revision, action, reason, reviewerId) {
     );
     return true;
   });
+}
+export async function publishedMembers() {
+  if (!process.env.DATABASE_URL) return [];
+  await initialize();
+  return (
+    await pool.query(
+      "SELECT u.id FROM users u WHERE NOT u.is_hidden AND EXISTS(SELECT 1 FROM listings l WHERE l.owner_id=u.github_id AND l.status='approved') ORDER BY u.created_at DESC LIMIT 5000",
+    )
+  ).rows;
 }
 export async function publishedPaths() {
   if (!process.env.DATABASE_URL) return [];

@@ -1,4 +1,6 @@
 import pg from "pg";
+import { repositorySnapshot } from "./repository-snapshot.mjs";
+import { categoryNames } from "./categories.ts";
 import { randomBytes, createHash } from "node:crypto";
 export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -19,14 +21,28 @@ export function initialize() {
       CREATE TABLE IF NOT EXISTS reviews(id BIGINT NOT NULL, action TEXT NOT NULL, at BIGINT NOT NULL);
       CREATE TABLE IF NOT EXISTS data_migrations(name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1;
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS repository JSONB NOT NULL DEFAULT '{}'::jsonb;
+      ALTER TABLE listings ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'Tooling';
       CREATE INDEX IF NOT EXISTS listings_status_submitted ON listings(status, submitted DESC);
       CREATE INDEX IF NOT EXISTS proofs_expiry ON proofs(expires);
       CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY,github_id BIGINT NOT NULL UNIQUE,github_login TEXT NOT NULL,display_name TEXT NOT NULL,bio TEXT NOT NULL DEFAULT '',website TEXT NOT NULL DEFAULT '',avatar_url TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_note TEXT NOT NULL DEFAULT '';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_revision BIGINT NOT NULL DEFAULT 1;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS review_requested BOOLEAN NOT NULL DEFAULT FALSE;
+      CREATE TABLE IF NOT EXISTS profile_reviews(id BIGSERIAL PRIMARY KEY,user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,reviewer_id BIGINT NOT NULL,action TEXT NOT NULL,note TEXT NOT NULL,at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY,user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires BIGINT NOT NULL);
       CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires);
       CREATE TABLE IF NOT EXISTS oauth_flows(state_hash TEXT PRIMARY KEY,verifier TEXT NOT NULL,expires BIGINT NOT NULL);
       CREATE INDEX IF NOT EXISTS oauth_expiry ON oauth_flows(expires);
+      CREATE TABLE IF NOT EXISTS api_limits(key TEXT NOT NULL,window_id BIGINT NOT NULL,count INTEGER NOT NULL,expires BIGINT NOT NULL,PRIMARY KEY(key,window_id));
+      CREATE INDEX IF NOT EXISTS api_limits_expiry ON api_limits(expires);
+      CREATE TABLE IF NOT EXISTS engagement_receipts(nonce UUID NOT NULL,kind TEXT NOT NULL,project_id BIGINT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(nonce,kind));
+      CREATE TABLE IF NOT EXISTS engagement_events(project_id BIGINT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,day DATE NOT NULL,actor_hash TEXT NOT NULL,kind TEXT NOT NULL,source TEXT NOT NULL,PRIMARY KEY(project_id,day,actor_hash,kind));
+      CREATE TABLE IF NOT EXISTS engagement_daily(project_id BIGINT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,day DATE NOT NULL,views BIGINT NOT NULL DEFAULT 0,outbound BIGINT NOT NULL DEFAULT 0,PRIMARY KEY(project_id,day));
+      CREATE TABLE IF NOT EXISTS reports(id UUID PRIMARY KEY,reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,target_type TEXT NOT NULL,target TEXT NOT NULL,category TEXT NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'open',created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),reviewer_id BIGINT,resolution TEXT,resolved_at TIMESTAMPTZ);
+      CREATE INDEX IF NOT EXISTS reports_queue ON reports(status,created_at);
       CREATE TABLE IF NOT EXISTS moderation_events(id BIGSERIAL PRIMARY KEY,listing_id BIGINT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,reviewer_id BIGINT NOT NULL,action TEXT NOT NULL,reason TEXT NOT NULL,at BIGINT NOT NULL);
       CREATE INDEX IF NOT EXISTS moderation_events_listing ON moderation_events(listing_id,at DESC);
       CREATE TABLE IF NOT EXISTS listing_images(listing_id BIGINT PRIMARY KEY REFERENCES listings(id) ON DELETE CASCADE,object_key TEXT NOT NULL);
@@ -79,7 +95,9 @@ export async function getProof(token) {
     )
   ).rows[0];
 }
-export async function submit(token, repo, summary) {
+export async function submit(token, repo, summary, category = "Tooling") {
+  if (!categoryNames.includes(category)) throw new Error("Invalid category");
+  const snapshot = repositorySnapshot(repo);
   await initialize();
   return transaction(async (client) => {
     const proof = (
@@ -102,9 +120,17 @@ export async function submit(token, repo, summary) {
       [repo.id, repo.owner.id],
     );
     await client.query(
-      `INSERT INTO listings(id,owner_id,full_name,summary,submitted,status) VALUES($1,$2,$3,$4,$5,'pending')
-      ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id,full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending',revision=listings.revision+1`,
-      [repo.id, repo.owner.id, repo.full_name, summary, Date.now()],
+      `INSERT INTO listings(id,owner_id,full_name,summary,submitted,status,repository,category) VALUES($1,$2,$3,$4,$5,'pending',$6,$7)
+      ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id,full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending',revision=listings.revision+1,repository=excluded.repository,category=excluded.category`,
+      [
+        repo.id,
+        repo.owner.id,
+        repo.full_name,
+        summary,
+        Date.now(),
+        JSON.stringify(snapshot),
+        category,
+      ],
     );
   });
 }
@@ -112,7 +138,7 @@ export async function listings(status) {
   await initialize();
   return (
     await pool.query(
-      "SELECT id::float8 AS id,full_name,summary,submitted::float8 AS submitted FROM listings WHERE status=$1 ORDER BY submitted DESC LIMIT 100",
+      "SELECT id::float8 AS id,full_name,summary,submitted::float8 AS submitted,category,repository FROM listings WHERE status=$1 ORDER BY submitted DESC LIMIT 100",
       [status],
     )
   ).rows;

@@ -12,6 +12,7 @@ import { Icon } from "./icon";
 import { Modal } from "./modal";
 import { ProjectCard, ProjectMark } from "./project-card";
 import { ProjectVisual } from "./project-visual";
+import { FollowCreator } from "./research-actions";
 import { ResearchEditor } from "./research-actions";
 export function CollectionWorkspace() {
   const { collections, createCollection, updateCollection } = useResearch();
@@ -331,9 +332,7 @@ export function PersonalCollectionPage({ id }: { id: string }) {
       </Link>
       <div className={`personal-collection-header ${collection.color}`}>
         <div>
-          <span className="section-kicker">
-            PERSONAL COLLECTION · ON THIS DEVICE
-          </span>
+          <span className="section-kicker">PERSONAL COLLECTION · PRIVATE</span>
           <h1>{collection.name}</h1>
           <p>
             {collection.description || "A collection of projects to look into."}
@@ -387,6 +386,7 @@ export function PersonalCollectionPage({ id }: { id: string }) {
         </div>
         <div className="collection-pick-list">
           {projects
+            .filter((p) => collection.projectIds.includes(p.id))
             .filter((p) =>
               `${p.name} ${p.tagline}`
                 .toLowerCase()
@@ -461,7 +461,7 @@ export function PersonalCollectionPage({ id }: { id: string }) {
 export function ResearchLibrary() {
   const { saved, toggleSave } = useWorkspace();
   const { references } = useSourceReferences();
-  const { notes, collections } = useResearch();
+  const { notes, collections, following } = useResearch();
   const [query, setQuery] = useState("");
   const [view, setView] = useStored("drp-library-view", "list");
   const [status, setStatus] = useState("");
@@ -493,6 +493,27 @@ export function ResearchLibrary() {
           Find projects
         </Link>
       </div>
+      {following.length > 0 && (
+        <section className="followed-maintainers">
+          <h2>Followed maintainers</h2>
+          {following.map((handle) => (
+            <div key={handle}>
+              <Link
+                href={
+                  handle.startsWith("member:")
+                    ? "/members/" + handle.slice(7)
+                    : "/developers/" + handle
+                }
+              >
+                {handle.startsWith("member:")
+                  ? "View maintainer profile"
+                  : handle}
+              </Link>
+              <FollowCreator handle={handle} />
+            </div>
+          ))}
+        </section>
+      )}
       <div className="library-filterbar">
         <div className="search-field">
           <Icon name="search" size={17} />

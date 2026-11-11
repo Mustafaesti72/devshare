@@ -1,3 +1,6 @@
+import { repositorySnapshot } from "./repository-snapshot.mjs";
+import { parseSourceSnapshots } from "./github-input.ts";
+import { categoryNames } from "./categories.ts";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, chmodSync } from "node:fs";
 import { join } from "node:path";
@@ -15,9 +18,28 @@ function db() {
  CREATE TABLE IF NOT EXISTS proofs(token TEXT PRIMARY KEY, phrase TEXT NOT NULL, repo TEXT NOT NULL, expires INTEGER NOT NULL);
  CREATE TABLE IF NOT EXISTS listings(id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, full_name TEXT NOT NULL, summary TEXT NOT NULL, submitted INTEGER NOT NULL, status TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS reviews(id INTEGER NOT NULL, action TEXT NOT NULL, at INTEGER NOT NULL);`);
-  if (!connection.prepare("PRAGMA table_info(proofs)").all().some(column=>column.name==="attempts")) {
-    connection.exec("ALTER TABLE proofs ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0");
+  if (
+    !connection
+      .prepare("PRAGMA table_info(proofs)")
+      .all()
+      .some((column) => column.name === "attempts")
+  ) {
+    connection.exec(
+      "ALTER TABLE proofs ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0",
+    );
   }
+  const columns = connection
+    .prepare("PRAGMA table_info(listings)")
+    .all()
+    .map((column) => column.name);
+  if (!columns.includes("repository"))
+    connection.exec(
+      "ALTER TABLE listings ADD COLUMN repository TEXT NOT NULL DEFAULT '{}'",
+    );
+  if (!columns.includes("category"))
+    connection.exec(
+      "ALTER TABLE listings ADD COLUMN category TEXT NOT NULL DEFAULT 'Tooling'",
+    );
   database = connection;
   return database;
 }
@@ -40,7 +62,9 @@ export function getProof(token) {
     .prepare("SELECT phrase,repo FROM proofs WHERE token=? AND expires>?")
     .get(digest(token), Date.now());
 }
-export function submit(token, repo, summary) {
+export function submit(token, repo, summary, category = "Tooling") {
+  if (!categoryNames.includes(category)) throw new Error("Invalid category");
+  const snapshot = repositorySnapshot(repo);
   const conn = db();
   conn.exec("BEGIN IMMEDIATE");
   try {
@@ -49,7 +73,7 @@ export function submit(token, repo, summary) {
       throw new Error("expired");
     conn
       .prepare(
-        "INSERT INTO listings VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id, full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending'",
+        "INSERT INTO listings(id,owner_id,full_name,summary,submitted,status,repository,category) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET owner_id=excluded.owner_id, full_name=excluded.full_name,summary=excluded.summary,submitted=excluded.submitted,status='pending',repository=excluded.repository,category=excluded.category",
       )
       .run(
         repo.id,
@@ -58,6 +82,8 @@ export function submit(token, repo, summary) {
         summary,
         Date.now(),
         "pending",
+        JSON.stringify(snapshot),
+        category,
       );
     conn.prepare("DELETE FROM proofs WHERE token=?").run(digest(token));
     conn.exec("COMMIT");
@@ -69,9 +95,13 @@ export function submit(token, repo, summary) {
 export function listings(status) {
   return db()
     .prepare(
-      "SELECT id,full_name,summary,submitted FROM listings WHERE status=? ORDER BY submitted DESC LIMIT 100",
+      "SELECT id,full_name,summary,submitted,repository,category FROM listings WHERE status=? ORDER BY submitted DESC LIMIT 100",
     )
-    .all(status);
+    .all(status)
+    .map((row) => ({
+      ...row,
+      repository: parseSourceSnapshots("[" + row.repository + "]")[0],
+    }));
 }
 export function review(id, action) {
   if (!["approved", "hidden"].includes(action))
@@ -94,4 +124,12 @@ export function review(id, action) {
   }
 }
 
-export function reserveAttempt(token){return db().prepare("UPDATE proofs SET attempts=attempts+1 WHERE token=? AND expires>? AND attempts<5").run(digest(token),Date.now()).changes===1}
+export function reserveAttempt(token) {
+  return (
+    db()
+      .prepare(
+        "UPDATE proofs SET attempts=attempts+1 WHERE token=? AND expires>? AND attempts<5",
+      )
+      .run(digest(token), Date.now()).changes === 1
+  );
+}

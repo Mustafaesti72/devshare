@@ -1,6 +1,8 @@
 import { currentModerator } from "@/lib/moderation";
 import { ProjectImageUpload } from "@/components/project-image-upload";
 import Link from "next/link";
+import { CreatorAnalytics } from "@/components/creator-analytics";
+import { creatorAnalytics } from "@/lib/engagement.mjs";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { userProjects } from "@/lib/accounts.mjs";
@@ -11,13 +13,15 @@ export const metadata = {
 export default async function Dashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ notice?: string; period?: string }>;
 }) {
-  const { notice } = await searchParams;
+  const { notice, period } = await searchParams;
+  const days = [1, 7, 30].includes(Number(period)) ? Number(period) : 30;
   const user = await currentUser();
   if (!user) redirect("/login");
   const moderator = await currentModerator();
   const projects = await userProjects(user.github_id);
+  const analytics = await creatorAnalytics(user.github_id, user.id, days);
   return (
     <main id="main" className="directory account-page">
       <header className="account-heading">
@@ -29,6 +33,13 @@ export default async function Dashboard({
           Submit a repository
         </Link>
       </header>
+      {user.is_hidden && (
+        <p role="status">
+          Your public profile is hidden. {user.moderation_note} Edit your
+          profile to request another review. Restored profiles still need
+          projects reviewed separately.
+        </p>
+      )}
       <nav className="account-nav">
         <Link href={"/members/" + user.id}>Public profile</Link>
         <Link href="/profile">Edit profile</Link>
@@ -114,6 +125,7 @@ export default async function Dashboard({
           </div>
         )}
       </section>
+      <CreatorAnalytics data={analytics} days={days} />
       <section className="account-security">
         <h2>Account access</h2>
         <p>You’re signed in with GitHub. Sessions expire after 30 days.</p>

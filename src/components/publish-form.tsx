@@ -1,15 +1,19 @@
 "use client";
+import { categoryNames } from "@/lib/categories";
 import Link from "next/link";
 import { useState } from "react";
 export function PublishForm({
   signedIn = false,
   initialRepo = "",
   initialSummary = "",
+  initialCategory = "Tooling",
 }: {
   signedIn?: boolean;
   initialRepo?: string;
   initialSummary?: string;
+  initialCategory?: string;
 }) {
+  const [category, setCategory] = useState(initialCategory);
   const [repo, setRepo] = useState(initialRepo),
     [phrase, setPhrase] = useState(""),
     [gist, setGist] = useState(""),
@@ -30,6 +34,7 @@ export function PublishForm({
           repo,
           gist,
           summary,
+          category,
         }),
       });
       const d = await res.json();
@@ -96,6 +101,17 @@ export function PublishForm({
               </label>
             </>
           )}
+          <label>
+            Category
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              {categoryNames.map((name) => (
+                <option key={name}>{name}</option>
+              ))}
+            </select>
+          </label>
           <label>
             What can someone build with your project?
             <textarea

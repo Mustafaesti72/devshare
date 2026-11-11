@@ -32,6 +32,22 @@ export default function Privacy() {
         in a private Railway object bucket and served through DevShare. GitHub
         supplies account avatars.
       </p>
+      <h2 id="analytics">Optional project analytics</h2>
+      <p>
+        Project pages ask before recording analytics. If you allow them, a
+        random browser-session identifier helps count visits and repository
+        clicks. The server stores a project-specific hash that rotates monthly,
+        the UTC date and a broad referrer category. Full referrer URLs and raw
+        IP addresses are not stored in these analytics. Per-visitor records
+        expire after 35 days; daily totals remain. Maintainers see aggregated
+        counts and approximate visitor totals. You can decline or change this
+        preference on a project page.
+      </p>
+      <p>
+        Abuse prevention separately uses short-lived keyed hashes for request
+        limits. Reports are private to moderators and retain the reporter,
+        target, reason and resolution.
+      </p>
       <h2>Deletion and backups</h2>
       <p>
         You can edit your profile or delete your account from profile settings.

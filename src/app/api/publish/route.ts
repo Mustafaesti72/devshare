@@ -1,8 +1,16 @@
+import { categoryNames } from "@/lib/categories";
+import { apiLimit } from "@/lib/api-limit.mjs";
+import { jsonObject, RequestBodyError } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { siteUrl } from "@/lib/site";
 import { parseRepository } from "@/lib/github-input";
-import { startProof, getProof, submit, reserveAttempt } from "@/lib/submissions.mjs";
+import {
+  startProof,
+  getProof,
+  submit,
+  reserveAttempt,
+} from "@/lib/submissions.mjs";
 const fail = (error: string, status: number) =>
   NextResponse.json({ error }, { status });
 async function github(path: string) {
@@ -19,32 +27,61 @@ async function github(path: string) {
 export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== siteUrl.origin)
     return fail("Open the form on this site to submit.", 403);
-  if (!request.headers.get("content-type")?.startsWith("application/json"))
-    return fail("JSON is required.", 415);
-  const raw = await request.text();
-  if (raw.length > 5000) return fail("Input too long.", 413);
+  const limited = await apiLimit(request, "publishing", {
+    limit: 20,
+    seconds: 3600,
+  });
+  if (limited) return limited;
   let data;
   try {
-    data = JSON.parse(raw);
-  } catch {
-    return fail("Invalid form.", 400);
+    data = await jsonObject(request, 5000);
+  } catch (error) {
+    return fail(
+      "Invalid form.",
+      error instanceof RequestBodyError ? error.status : 400,
+    );
   }
-  if (!data || typeof data !== "object") return fail("Invalid form.", 400);
+  const category =
+    typeof data.category === "string" ? data.category : "Tooling";
+  if (!categoryNames.includes(category)) return fail("Choose a category.", 400);
   if (data.action === "account-submit") {
     try {
       const user = await currentUser();
       if (!user) return fail("Sign in to submit this repository.", 401);
-      const parsed = parseRepository(typeof data.repo === "string" ? data.repo : "");
-      const summary = typeof data.summary === "string" ? data.summary.trim() : "";
-      if (!parsed || summary.length < 40 || summary.length > 1000) return fail("Enter a public repository and a description of 40 to 1000 characters.", 400);
-      const response = await github("repos/" + parsed.owner + "/" + parsed.repo);
-      if (!response.ok) return fail("GitHub could not confirm this repository. Try again later.", 422);
+      const parsed = parseRepository(
+        typeof data.repo === "string" ? data.repo : "",
+      );
+      const summary =
+        typeof data.summary === "string" ? data.summary.trim() : "";
+      if (!parsed || summary.length < 40 || summary.length > 1000)
+        return fail(
+          "Enter a public repository and a description of 40 to 1000 characters.",
+          400,
+        );
+      const response = await github(
+        "repos/" + parsed.owner + "/" + parsed.repo,
+      );
+      if (!response.ok)
+        return fail(
+          "GitHub could not confirm this repository. Try again later.",
+          422,
+        );
       const repo = await response.json();
-      if (repo.private !== false || repo.owner?.type !== "User" || repo.owner?.id !== user.github_id) return fail("Choose a public repository owned by your signed-in GitHub account.", 403);
+      if (
+        repo.private !== false ||
+        repo.owner?.type !== "User" ||
+        repo.owner?.id !== user.github_id
+      )
+        return fail(
+          "Choose a public repository owned by your signed-in GitHub account.",
+          403,
+        );
       const proof = await startProof(repo.full_name);
-      await submit(proof.token, repo, summary);
-      return NextResponse.json({status:"pending", name:repo.full_name});
-    } catch { return fail("Submission could not finish. Try again later.", 503); }
+      await submit(proof.token, repo, summary, category);
+      return NextResponse.json({ status: "pending", name: repo.full_name });
+    } catch {
+      return fail("Submission could not finish. Try again later.", 503);
+    }
   }
   if (data.action === "start") {
     const repo = parseRepository(
@@ -84,7 +121,11 @@ export async function POST(request: NextRequest) {
       400,
     );
   try {
-    if(!(await reserveAttempt(token)))return fail("Verification attempts exhausted. Start a new verification.",429);
+    if (!(await reserveAttempt(token)))
+      return fail(
+        "Verification attempts exhausted. Start a new verification.",
+        429,
+      );
     const [gr, rr] = await Promise.all([
       github("gists/" + match[1]),
       github("repos/" + proof.repo),
@@ -108,7 +149,7 @@ export async function POST(request: NextRequest) {
         "Verification failed. The personal repository and Gist must have the same owner and the file must match the challenge.",
         403,
       );
-    await submit(token, repo, summary);
+    await submit(token, repo, summary, category);
     const result = NextResponse.json({
       status: "pending",
       name: repo.full_name,

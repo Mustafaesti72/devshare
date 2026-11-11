@@ -1,3 +1,6 @@
+import { indexable } from "@/lib/site";
+import { FollowCreator } from "@/components/research-actions";
+import { currentUser } from "@/lib/auth";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,11 +11,12 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const user = process.env.DATABASE_URL ? await publicProfile(id) : null;
   if (!user) return { title: "Member not found", robots: { index: false } };
+  const projects = await userProjects(user.github_id, true);
   return {
     title: user.display_name + "’s profile",
     description: user.bio || "Developer on DevShare",
     alternates: { canonical: "/members/" + user.id },
-    robots: { index: false, follow: true },
+    robots: { index: indexable && projects.length > 0, follow: true },
   };
 }
 export default async function Member({ params }: Props) {
@@ -20,6 +24,7 @@ export default async function Member({ params }: Props) {
   const user = process.env.DATABASE_URL ? await publicProfile(id) : null;
   if (!user) notFound();
   const projects = await userProjects(user.github_id, true);
+  const viewer = await currentUser();
   return (
     <main id="main" className="directory account-page">
       <Link href="/">← Discover projects</Link>
@@ -38,6 +43,12 @@ export default async function Member({ params }: Props) {
           </a>
         </div>
       </header>
+      <div className="account-actions">
+        {viewer?.id !== user.id && (
+          <FollowCreator handle={"member:" + user.id} />
+        )}
+        <Link href={"/report?profile=" + user.id}>Report profile</Link>
+      </div>
       {user.bio && <p className="member-bio">{user.bio}</p>}
       {user.website && (
         <p>

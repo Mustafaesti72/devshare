@@ -1,27 +1,34 @@
 import { notFound } from "next/navigation";
-import { topics, topicSlug } from "@/lib/catalog";
-import { Discovery } from "@/components/discovery";
+import { listings } from "@/lib/submissions.mjs";
+export const dynamic = "force-dynamic";
+import { Directory } from "@/components/directory";
+import { categories } from "@/lib/categories";
+import { indexable } from "@/lib/site";
+type Props = { params: Promise<{ topic: string }> };
 export function generateStaticParams() {
-  return topics.map((t) => ({ topic: topicSlug(t) }));
+  return categories.map((c) => ({ topic: c.slug }));
 }
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ topic: string }>;
-}) {
-  const p = await params;
+export async function generateMetadata({ params }: Props) {
+  const { topic } = await params;
+  const c = categories.find((c) => c.slug === topic);
+  if (!c) notFound();
   return {
-    title: topics.find((t) => topicSlug(t) === p.topic) || "Category",
-    robots: { index: false, follow: true },
+    title: c.name + " developer tools",
+    description: c.description,
+    robots: { index: indexable, follow: true },
+    alternates: { canonical: "/topics/" + c.slug },
   };
 }
-export default async function Topic({
-  params,
-}: {
-  params: Promise<{ topic: string }>;
-}) {
-  const p = await params;
-  const topic = topics.find((t) => topicSlug(t) === p.topic);
-  if (!topic) notFound();
-  return <Discovery key={topic} mode="category" initialTopic={topic} />;
+export default async function Topic({ params }: Props) {
+  const { topic } = await params;
+  const c = categories.find((c) => c.slug === topic);
+  if (!c) notFound();
+  return (
+    <Directory
+      published={await listings("approved")}
+      initialGroup={c.name}
+      heading={c.name + " tools"}
+      intro={c.description}
+    />
+  );
 }

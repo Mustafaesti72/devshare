@@ -5,9 +5,11 @@ import "./globals.css";
 import "./account.css";
 import "./workbench.css";
 import "./directory.css";
+import "./mvp.css";
 import { ResearchProvider } from "@/lib/research";
 export const metadata: Metadata = {
   metadataBase: siteUrl,
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
   title: {
     default: "Discover developer projects | DevShare",
     template: "%s | DevShare",

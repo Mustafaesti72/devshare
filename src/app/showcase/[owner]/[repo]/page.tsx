@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { ProjectEngagement } from "@/components/project-engagement";
+import { engagementToken } from "@/lib/engagement.mjs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { publishedProject } from "@/lib/publishing.mjs";
@@ -15,6 +17,7 @@ export async function generateMetadata(props: Props) {
   return {
     title: row.full_name,
     description: row.summary.slice(0, 160),
+    openGraph: { title: row.full_name, description: row.summary.slice(0, 160) },
     alternates: { canonical: "/showcase/" + row.full_name },
     robots: { index: indexable, follow: true },
   };
@@ -36,15 +39,19 @@ export default async function Showcase(props: Props) {
         <h1>{row.full_name}</h1>
       </header>
       <p className="member-bio">{row.summary}</p>
+      {row.repository?.fullName && (
+        <p>
+          {row.category} · {row.repository.language || "Language unreported"} ·{" "}
+          {row.repository.license || "License unspecified — review source"} ·{" "}
+          {row.repository.stars.toLocaleString("en-US")} GitHub stars · Snapshot{" "}
+          {row.repository.fetchedAt.slice(0, 10)}
+        </p>
+      )}
       <div className="account-actions">
-        <a
-          className="btn primary"
-          href={"https://github.com/" + row.full_name}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View repository ↗
-        </a>
+        <ProjectEngagement
+          token={engagementToken(row.id)}
+          repository={"https://github.com/" + row.full_name}
+        />
         <Link
           className="btn"
           href={"/inspect?repo=" + encodeURIComponent(row.full_name)}
@@ -64,6 +71,9 @@ export default async function Showcase(props: Props) {
       )}
       <section className="account-security">
         <h2>From the maintainer</h2>
+        <Link href={"/report?repo=" + encodeURIComponent(row.full_name)}>
+          Report this project
+        </Link>
         <p>Repository ownership was confirmed before editorial review.</p>
         {row.creator_id && (
           <Link href={"/members/" + row.creator_id}>
