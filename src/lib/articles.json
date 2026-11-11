@@ -1,0 +1,139 @@
+[
+  {
+    "slug": "evaluate-open-source",
+    "title": "How to evaluate an open source dependency",
+    "description": "A practical review of maintenance, integration cost and exit options.",
+    "sections": [
+      {
+        "title": "Start with the workload",
+        "body": "Write down the operation the dependency must perform, the input sizes you expect and the failures you need to recover from. A small reproducible example is more informative than a feature checklist. Include at least one malformed input and one slow operation."
+      },
+      {
+        "title": "Inspect maintenance in context",
+        "body": "Read recent releases and several resolved issues. Look for explanations of compatibility changes, reproduction requests and workarounds. A high issue count can reflect adoption. A quiet repository can reflect stability. Review the substance of maintainer responses before drawing a conclusion."
+      },
+      {
+        "title": "Plan the exit",
+        "body": "Keep dependency-specific calls behind a small boundary when replacement would be expensive. Record data formats, migration requirements and the license you reviewed. Save the repository with a short decision note so the next reviewer can reconstruct your reasoning."
+      }
+    ],
+    "repositories": [
+      "TanStack/query",
+      "astral-sh/ruff"
+    ]
+  },
+  {
+    "slug": "testing-layers",
+    "title": "Build a testing strategy around failure costs",
+    "description": "Choose unit, integration and browser checks by the failures they catch.",
+    "sections": [
+      {
+        "title": "Test the invariant first",
+        "body": "Money totals, permission rules and retry behavior deserve focused checks. State the property in plain language before choosing a test framework. A retry should preserve the same outcome, and a rejected operation should leave stored state consistent."
+      },
+      {
+        "title": "Exercise the integration boundary",
+        "body": "Use realistic storage and serialization at the boundary where modules exchange data. Include timeouts and partial failures. Mocking every dependency can hide differences between the mock and the actual database or transport."
+      },
+      {
+        "title": "Keep a small browser suite",
+        "body": "Cover the normal entry points that users depend on, including submitting a form, opening the resulting page and recovering from a validation error. Make failures include enough context to reproduce the interaction. Run the suite against the production build before publishing."
+      }
+    ],
+    "repositories": [
+      "vitest-dev/vitest",
+      "microsoft/playwright",
+      "pytest-dev/pytest"
+    ]
+  },
+  {
+    "slug": "database-choice",
+    "title": "Choose a database from your access patterns",
+    "description": "Translate product behavior into queries before comparing databases.",
+    "sections": [
+      {
+        "title": "Describe the reads and writes",
+        "body": "List the queries the first release needs, including sort order, filters and expected row counts. Identify which updates must happen together. This often reveals whether the difficult part is transaction consistency, analytical scans or operational scale."
+      },
+      {
+        "title": "Budget for operations",
+        "body": "Include backups, restore exercises, schema migrations and connection limits in the decision. A locally convenient database still needs a durable volume in production. A managed service still needs a recovery plan and someone responsible for checking it."
+      },
+      {
+        "title": "Measure a representative slice",
+        "body": "Load data with realistic distribution and run the slowest expected queries. Inspect the plan and measure the full request. Save the workload with the decision so future changes can be compared against the same baseline."
+      }
+    ],
+    "repositories": [
+      "duckdb/duckdb"
+    ]
+  },
+  {
+    "slug": "repository-readme",
+    "title": "Write a repository page people can evaluate",
+    "description": "Explain installation, constraints and ownership before asking for adoption.",
+    "sections": [
+      {
+        "title": "Show one complete path",
+        "body": "Describe the problem, give one runnable setup and show the expected output. State prerequisites next to the command that needs them. Readers should be able to tell whether a failure comes from their environment or the example."
+      },
+      {
+        "title": "Name the boundaries",
+        "body": "Document supported inputs, deployment requirements and important limitations. Link to the license and explain where configuration belongs. If an example needs a paid service, say so before the reader starts the setup."
+      },
+      {
+        "title": "Make review easier",
+        "body": "Include a screenshot when appearance matters, a small fixture when data shape matters and a troubleshooting section for known errors. On DevShare, use the repository submission flow to prove ownership and request editorial review."
+      }
+    ],
+    "repositories": [
+      "biomejs/biome"
+    ]
+  },
+  {
+    "slug": "maintainer-support",
+    "title": "Support an open source maintainer with a clear purpose",
+    "description": "Find the repository\u2019s own funding information and understand where support goes.",
+    "sections": [
+      {
+        "title": "Follow the repository\u2019s links",
+        "body": "Start with the repository funding file or maintainer documentation. A project can name several recipients, including individuals and organizations. Check the account you are supporting and read the available sponsorship details."
+      },
+      {
+        "title": "Connect support to your usage",
+        "body": "Identify which dependency saves your team time and which maintenance work your product relies on. A small recurring contribution can be easier to budget than an occasional emergency response. The recipient defines what a sponsorship includes."
+      },
+      {
+        "title": "Contribute useful context",
+        "body": "A reproducible bug report, a reviewed documentation fix or a compatibility report can reduce maintenance work. Follow the contribution guide and keep changes narrowly scoped. DevShare project pages display funding links where the repository publishes GitHub Sponsors accounts."
+      }
+    ],
+    "repositories": [
+      "TanStack/query",
+      "vitest-dev/vitest"
+    ]
+  },
+  {
+    "slug": "dependency-upgrades",
+    "title": "Make dependency upgrades easier to review",
+    "description": "Reduce upgrade risk with explicit compatibility checks and a rollback path.",
+    "sections": [
+      {
+        "title": "Keep the change readable",
+        "body": "Separate an upgrade from unrelated feature work. Read release notes for changed defaults, removed APIs and migration steps. Update the lockfile using the package manager already used by the project."
+      },
+      {
+        "title": "Exercise stored data",
+        "body": "Run the application with data created by the previous version. Pay particular attention to persisted settings, database migrations and serialized jobs. An application starting successfully does not establish that existing records remain readable."
+      },
+      {
+        "title": "Prepare recovery",
+        "body": "Document whether an upgrade can be reversed after a schema or data change. Keep a restorable backup where a migration changes durable state. Observe errors and latency after rollout, and retain the comparison that justified the update."
+      }
+    ],
+    "repositories": [
+      "biomejs/biome",
+      "TanStack/query"
+    ]
+  }
+]

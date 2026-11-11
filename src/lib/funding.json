@@ -1,0 +1,104 @@
+{
+  "TanStack/query": {
+    "handles": [
+      "tannerlinsley",
+      "tkdodo"
+    ],
+    "source": "https://github.com/TanStack/query/blob/main/.github/FUNDING.yml"
+  },
+  "BurntSushi/ripgrep": {
+    "handles": [
+      "BurntSushi"
+    ],
+    "source": "https://github.com/BurntSushi/ripgrep/blob/master/.github/FUNDING.yml"
+  },
+  "vitest-dev/vitest": {
+    "handles": [
+      "vitest-dev"
+    ],
+    "source": "https://github.com/vitest-dev/vitest/blob/main/.github/FUNDING.yml"
+  },
+  "pytest-dev/pytest": {
+    "handles": [
+      "pytest-dev"
+    ],
+    "source": "https://github.com/pytest-dev/pytest/blob/main/.github/FUNDING.yml"
+  },
+  "pola-rs/polars": {
+    "handles": [
+      "ritchie46"
+    ],
+    "source": "https://github.com/pola-rs/polars/blob/main/.github/FUNDING.yml"
+  },
+  "sharkdp/fd": {
+    "handles": [
+      "sharkdp",
+      "tavianator"
+    ],
+    "source": "https://github.com/sharkdp/fd/blob/master/.github/FUNDING.yml"
+  },
+  "dubzzz/fast-check": {
+    "handles": [
+      "dubzzz"
+    ],
+    "source": "https://github.com/dubzzz/fast-check/blob/main/.github/FUNDING.yml"
+  },
+  "mswjs/msw": {
+    "handles": [
+      "mswjs"
+    ],
+    "source": "https://github.com/mswjs/msw/blob/main/.github/FUNDING.yml"
+  },
+  "rest-assured/rest-assured": {
+    "handles": [
+      "johanhaleby"
+    ],
+    "source": "https://github.com/rest-assured/rest-assured/blob/master/.github/FUNDING.yml"
+  },
+  "testcontainers/testcontainers-java": {
+    "handles": [
+      "testcontainers"
+    ],
+    "source": "https://github.com/testcontainers/testcontainers-java/blob/main/.github/FUNDING.yml"
+  },
+  "junit-team/junit-framework": {
+    "handles": [
+      "junit-team"
+    ],
+    "source": "https://github.com/junit-team/junit-framework/blob/main/.github/FUNDING.yml"
+  },
+  "rspec/rspec-core": {
+    "handles": [
+      "JonRowe",
+      "benoittgt"
+    ],
+    "source": "https://github.com/rspec/rspec-core/blob/main/.github/FUNDING.yml"
+  },
+  "pestphp/pest": {
+    "handles": [
+      "nunomaduro"
+    ],
+    "source": "https://github.com/pestphp/pest/blob/5.x/.github/FUNDING.yml"
+  },
+  "honojs/hono": {
+    "handles": [
+      "yusukebe",
+      "usualoma"
+    ],
+    "source": "https://github.com/honojs/hono/blob/main/.github/FUNDING.yml"
+  },
+  "encode/httpx": {
+    "handles": [
+      "encode"
+    ],
+    "source": "https://github.com/encode/httpx/blob/master/.github/FUNDING.yml"
+  },
+  "sharkdp/bat": {
+    "handles": [
+      "sharkdp",
+      "keith-hall",
+      "Enselic"
+    ],
+    "source": "https://github.com/sharkdp/bat/blob/master/.github/FUNDING.yml"
+  }
+}
