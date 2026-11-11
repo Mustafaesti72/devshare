@@ -53,6 +53,8 @@ export type PublicRepository = {
   topics: string[];
 };
 
+export const sourceSnapshotLimit = 500;
+
 export function parseSourceSnapshots(raw: string): PublicRepository[] {
   try {
     const values = JSON.parse(raw);
@@ -64,7 +66,7 @@ export function parseSourceSnapshots(raw: string): PublicRepository[] {
         ? Math.max(0, Math.floor(v))
         : 0;
     const result: PublicRepository[] = [];
-    for (const x of values.slice(0, 30)) {
+    for (const x of values.slice(0, sourceSnapshotLimit)) {
       if (
         !x ||
         typeof x.id !== "number" ||
@@ -110,4 +112,22 @@ export function parseSourceSnapshots(raw: string): PublicRepository[] {
   } catch {
     return [];
   }
+}
+
+export function storeSourceSnapshot(
+  raw: string,
+  source: PublicRepository,
+): string {
+  const references = parseSourceSnapshots(raw);
+  const valid = parseSourceSnapshots(JSON.stringify([source]))[0];
+  if (!valid) throw new Error("Invalid source snapshot");
+  if (
+    references.length >= sourceSnapshotLimit &&
+    !references.some((item) => item.id === valid.id)
+  )
+    throw new Error("Source library limit reached");
+  return JSON.stringify([
+    valid,
+    ...references.filter((item) => item.id !== valid.id),
+  ]);
 }

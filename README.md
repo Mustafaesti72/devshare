@@ -21,7 +21,7 @@ Without DATABASE_URL, the public catalog and repository submission proof flow us
 - Six engineering guides, three reading lists and four category pages.
 - GitHub sign-in, editable public profiles, account deletion and device/session controls.
 - Personal public repository submissions verified against the signed-in GitHub numeric owner ID. Anonymous maintainers can alternatively prove ownership with a one-time public Gist challenge.
-- Private saved sources, notes, collections and maintainer follows, synced across devices with conflict handling and offline retry.
+- Private saved sources, notes, collections and maintainer follows, synced across devices with conflict handling and offline retry. Libraries hold up to 500 sources; capacity errors preserve existing entries. Collections can select directly from the real directory.
 - Project cover upload, replacement and deletion; edit/resubmit and withdrawal controls.
 - Editorial review, private reports, profile moderation and recorded reviewer notes. Stale revisions are rejected.
 - Consent-based project visits and GitHub click counts, with today, 7-day and 30-day dashboard views. Visitor estimates, saves and followers are aggregate activity, not earnings.

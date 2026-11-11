@@ -1,5 +1,5 @@
 import { parseCollections, parseNotes } from "./research-data.ts";
-import { parseSourceSnapshots } from "./github-input.ts";
+import { parseSourceSnapshots, sourceSnapshotLimit } from "./github-input.ts";
 
 export const workspaceKeys = [
   "drp-saved",
@@ -34,8 +34,14 @@ export function normalizeWorkspace(key, raw) {
       throw new Error("Duplicate collection");
     return JSON.stringify(rows);
   }
-  if (key === "drp-source-references")
-    return JSON.stringify(parseSourceSnapshots(raw));
+  if (key === "drp-source-references") {
+    if (parsed.length > sourceSnapshotLimit)
+      throw new Error("Source library limit reached");
+    const sources = parseSourceSnapshots(raw);
+    if (new Set(sources.map((source) => source.id)).size !== sources.length)
+      throw new Error("Duplicate source");
+    return JSON.stringify(sources);
+  }
   return JSON.stringify(
     [
       ...new Set(
@@ -114,7 +120,7 @@ export function mergeWorkspace(key, baseRaw, nextRaw, currentRaw) {
     const rows = order
       .filter((id) => Object.hasOwn(result, id))
       .map((id) => result[id]);
-    if (rows.length > (key === "drp-collections" ? 100 : 30))
+    if (rows.length > (key === "drp-collections" ? 100 : sourceSnapshotLimit))
       throw new Error("Workspace limit reached");
     return normalizeWorkspace(key, JSON.stringify(rows));
   }

@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mergeWorkspace } from "../src/lib/workspace-data.mjs";
+import {
+  mergeWorkspace,
+  normalizeWorkspace,
+} from "../src/lib/workspace-data.mjs";
 const raw = JSON.stringify;
 test("independent additions and removals merge across devices", () => {
   assert.deepEqual(
@@ -76,6 +79,34 @@ test("concurrent additions cannot silently truncate an account library", () => {
       raw(base),
       raw([...base, "local"]),
       raw([...base, "remote"]),
+    ),
+  );
+});
+
+test("cloud source writes preserve more than thirty entries and reject oversized or duplicate lists", () => {
+  const sources = Array.from({ length: 501 }, (_, i) => ({
+    id: i + 1,
+    fullName: "check/source-" + i,
+    fetchedAt: "2026-11-11T00:00:00Z",
+  }));
+  assert.equal(
+    JSON.parse(
+      normalizeWorkspace("drp-source-references", raw(sources.slice(0, 52))),
+    ).length,
+    52,
+  );
+  assert.throws(() =>
+    normalizeWorkspace("drp-source-references", raw(sources)),
+  );
+  assert.throws(() =>
+    normalizeWorkspace("drp-source-references", raw([sources[0], sources[0]])),
+  );
+  assert.throws(() =>
+    mergeWorkspace(
+      "drp-source-references",
+      raw(sources.slice(0, 499)),
+      raw(sources.slice(0, 500)),
+      raw([...sources.slice(0, 499), sources[500]]),
     ),
   );
 });

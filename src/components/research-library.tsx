@@ -2,8 +2,13 @@
 import { useState } from "react";
 import { useSourceReferences, sourceKey } from "@/lib/source-references";
 import { SourceReferenceCard } from "./source-reference-card";
+import repositories from "@/lib/directory.json";
 import bundles from "@/lib/bundles.json";
-import { useStored } from "@/lib/browser-store";
+import {
+  useStored,
+  useWorkspaceSync,
+  retryWorkspaceSync,
+} from "@/lib/browser-store";
 import Link from "next/link";
 import { useResearch, type PersonalCollection } from "@/lib/research";
 import { projects, projectPath } from "@/lib/catalog";
@@ -302,7 +307,15 @@ export function CollectionWorkspace() {
 }
 export function PersonalCollectionPage({ id }: { id: string }) {
   const { collections, toggleItem } = useResearch();
-  const { references } = useSourceReferences();
+  const { references, saveReference } = useSourceReferences();
+  const { notify } = useWorkspace();
+  const sync = useWorkspaceSync();
+  const sources = [
+    ...references,
+    ...repositories.filter(
+      (repo) => !references.some((item) => item.id === repo.id),
+    ),
+  ];
   const collection = collections.find((c) => c.id === id);
   const [picker, setPicker] = useState(false);
   const [query, setQuery] = useState("");
@@ -314,13 +327,30 @@ export function PersonalCollectionPage({ id }: { id: string }) {
         </Link>
         <div className="empty-state">
           <Icon name="folder" size={30} />
-          <h1>Collection not found.</h1>
-          <p>Sign in to the account you used to create this collection.</p>
+          <h1>
+            {!sync || sync.loading
+              ? "Loading your collection…"
+              : sync.error
+                ? "Library temporarily unavailable"
+                : "Collection not found."}
+          </h1>
+          <p>
+            {!sync || sync.loading
+              ? "Your saved projects will appear when your library is ready."
+              : sync.error
+                ? "Your saved projects have not been removed. Retry the connection to load your library."
+                : "Sign in to the account you used to create this collection."}
+          </p>
+          {sync?.error && (
+            <button className="btn" onClick={retryWorkspaceSync}>
+              Retry loading
+            </button>
+          )}
         </div>
       </main>
     );
   const items = projects.filter((p) => collection.projectIds.includes(p.id));
-  const sourceItems = references.filter((p) =>
+  const sourceItems = sources.filter((p) =>
     collection.projectIds.includes(sourceKey(p)),
   );
   const count = items.length + sourceItems.length;
@@ -414,10 +444,12 @@ export function PersonalCollectionPage({ id }: { id: string }) {
               </button>
             ))}
         </div>
-        {references.length > 0 && (
+        {sources.length > 0 && (
           <div className="collection-pick-list live-source-picks">
-            <span className="section-kicker">YOUR GITHUB SOURCES</span>
-            {references
+            <span className="section-kicker">
+              SAVED SOURCES AND PUBLIC DIRECTORY
+            </span>
+            {sources
               .filter((p) =>
                 p.fullName.toLowerCase().includes(query.toLowerCase()),
               )
@@ -430,7 +462,18 @@ export function PersonalCollectionPage({ id }: { id: string }) {
                       : ""
                   }
                   aria-pressed={collection.projectIds.includes(sourceKey(p))}
-                  onClick={() => toggleItem(id, sourceKey(p))}
+                  onClick={() => {
+                    if (
+                      !collection.projectIds.includes(sourceKey(p)) &&
+                      !saveReference(p)
+                    ) {
+                      notify(
+                        "Your library holds up to 500 sources. Remove a source before adding another.",
+                      );
+                      return;
+                    }
+                    toggleItem(id, sourceKey(p));
+                  }}
                 >
                   <span className="source-reference-mark">
                     <Icon name="git" size={17} />

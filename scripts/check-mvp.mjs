@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes } from "node:crypto";
 import pg from "pg";
+import { readFile } from "node:fs/promises";
 if (!process.env.DATABASE_URL)
   throw new Error("A PostgreSQL test connection is required");
 const schema = "mvp_check_" + randomBytes(8).toString("hex");
@@ -36,6 +37,27 @@ try {
     avatar_url: "https://avatars.githubusercontent.com/u/991",
   });
   const user = await accounts.sessionUser(session);
+  const workspace = await import("../src/lib/workspace.mjs");
+  const catalog = JSON.parse(
+    await readFile(
+      new URL("../src/lib/directory.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const savedSources = await workspace.writeWorkspace(
+    user.id,
+    "drp-source-references",
+    "[]",
+    JSON.stringify(catalog),
+  );
+  assert.equal(savedSources.conflict, false);
+  assert.equal(
+    JSON.parse(
+      (await workspace.readWorkspace(user.id))["drp-source-references"],
+    ).length,
+    catalog.length,
+  );
+
   const proof = await db.startProof("mvp-check/tool");
   await db.submit(
     proof.token,
@@ -221,6 +243,7 @@ try {
   console.log(
     JSON.stringify({
       schemaIsolation: "passed",
+      largeSourceLibrary: "passed",
       publicationMetadata: "passed",
       analyticsDeduplication: "passed",
       tokenReplay: "passed",

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useWorkspace } from "./workspace";
 import { Modal } from "./modal";
 
 import { useState } from "react";
@@ -329,13 +330,19 @@ const guide: Record<string, [string, string, string, string]> = {
 const path = (p: PublicRepository) => `/directory/${p.owner}/${p.name}`;
 function Save({ p, label }: { p: PublicRepository; label?: string }) {
   const { references, saveReference } = useSourceReferences();
+  const { notify } = useWorkspace();
   const saved = references.some((s) => s.id === p.id);
   return (
     <button
       className="dir-save"
       aria-label={`${saved ? "Saved" : "Save"} ${label || guide[p.name]?.[0] || p.name}`}
       disabled={saved}
-      onClick={() => saveReference(p)}
+      onClick={() => {
+        if (!saveReference(p))
+          notify(
+            "Your library holds up to 500 sources. Remove a source before adding another.",
+          );
+      }}
     >
       <Icon name={saved ? "check" : "bookmark"} size={16} />
       {saved ? "Saved" : "Save"}

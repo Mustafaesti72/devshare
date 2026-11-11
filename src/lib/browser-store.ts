@@ -217,7 +217,9 @@ export function useStored(key: string, fallback: string) {
   const get = useCallback(() => readStored(key, fallback), [key, fallback]);
   const server = useCallback(() => fallback, [fallback]);
   const value = useSyncExternalStore(subscribe, get, server);
-  function write(next: string) {
+  function write(update: string | ((current: string) => string)) {
+    const next =
+      typeof update === "function" ? update(readStored(key, fallback)) : update;
     const target = scopedKey(key);
     if (target) persist(target, next);
     else pending.set(key, next);

@@ -2,11 +2,10 @@
 import { CollectionPicker, ResearchEditor } from "./research-actions";
 import { sourceKey } from "@/lib/source-references";
 import { useState, useRef, useEffect } from "react";
-import {
-  parseSourceSnapshots,
-  type PublicRepository,
-} from "@/lib/github-input";
-import { useStored } from "@/lib/browser-store";
+import { type PublicRepository } from "@/lib/github-input";
+import { Modal } from "./modal";
+import { useResearch } from "@/lib/research";
+import { useSourceReferences } from "@/lib/source-references";
 import { useWorkspace } from "./workspace";
 import { Icon } from "./icon";
 export function GithubInspector({
@@ -18,11 +17,12 @@ export function GithubInspector({
   const [repository, setRepository] = useState<PublicRepository | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [raw, setRaw] = useStored("drp-source-references", "[]");
+  const { references, saveReference, removeReference } = useSourceReferences();
+  const { removeProject } = useResearch();
+  const [removing, setRemoving] = useState<PublicRepository | null>(null);
   const [copied, setCopied] = useState(false);
   const { notify } = useWorkspace();
   const controller = useRef<AbortController | null>(null);
-  const references = parseSourceSnapshots(raw);
   useEffect(() => () => controller.current?.abort(), []);
   async function inspect(value = input) {
     controller.current?.abort();
@@ -55,17 +55,13 @@ export function GithubInspector({
   }
   function save() {
     if (!repository) return;
-    setRaw(
-      JSON.stringify(
-        [repository, ...references.filter((p) => p.id !== repository.id)].slice(
-          0,
-          30,
-        ),
-      ),
-    );
-    notify(
-      "Source reference saved on this device. It is not a published listing.",
-    );
+    if (!saveReference(repository)) {
+      notify(
+        "Your library holds up to 500 sources. Remove a source before adding another.",
+      );
+      return;
+    }
+    notify("Source saved to your library. It is not a published listing.");
   }
   const isSaved = repository && references.some((p) => p.id === repository.id);
   async function copy() {
@@ -365,12 +361,7 @@ export function GithubInspector({
               <button
                 className="icon-button"
                 aria-label={`Remove ${p.fullName} reference`}
-                onClick={() => {
-                  setRaw(
-                    JSON.stringify(references.filter((x) => x.id !== p.id)),
-                  );
-                  notify("Source reference removed from this browser.");
-                }}
+                onClick={() => setRemoving(p)}
               >
                 <Icon name="close" size={15} />
               </button>
@@ -378,6 +369,33 @@ export function GithubInspector({
           ))}
         </section>
       )}
+      <Modal
+        open={!!removing}
+        onClose={() => setRemoving(null)}
+        title={"Remove " + (removing?.fullName || "source") + "?"}
+      >
+        <p>
+          This removes the project, its notes and its collection entries from
+          your private library.
+        </p>
+        <div className="account-actions">
+          <button className="btn" onClick={() => setRemoving(null)}>
+            Cancel
+          </button>
+          <button
+            className="btn primary"
+            onClick={() => {
+              if (!removing) return;
+              removeProject(sourceKey(removing));
+              removeReference(removing.id);
+              setRemoving(null);
+              notify("Project removed from your library.");
+            }}
+          >
+            Remove project
+          </button>
+        </div>
+      </Modal>
       <div className="inspector-service-note">
         <Icon name="clock" size={15} />
         <p>
