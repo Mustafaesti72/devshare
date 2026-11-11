@@ -5,21 +5,25 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/migrate.mjs && next start",
     "lint": "eslint",
     "test:catalog": "node --experimental-strip-types --test tests/catalog.test.mjs",
     "test:smoke": "node --test tests/smoke.test.mjs",
     "test:unit": "node --experimental-strip-types --test tests/catalog.test.mjs tests/github-input.test.mjs tests/research-data.test.mjs tests/publishing.test.mjs tests/revenue.test.mjs",
-    "revenue:rehearse": "node --experimental-strip-types scripts/rehearse.mjs"
+    "revenue:rehearse": "node --experimental-strip-types scripts/rehearse.mjs",
+    "assets:sync": "node scripts/sync-assets.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1166.0",
     "next": "16.4.6",
+    "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

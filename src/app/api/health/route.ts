@@ -1,6 +1,10 @@
 import { listings } from "@/lib/submissions.mjs";
+import { storageConfigured, checkStorage } from "@/lib/media.mjs";
 export const dynamic = "force-dynamic";
-export function GET() {
-  try { listings("pending"); return Response.json({status:"ok"}, {headers:{"Cache-Control":"no-store","X-Robots-Tag":"noindex"}}); }
-  catch { return Response.json({status:"unavailable"}, {status:503}); }
+export async function GET() {
+  try {
+    await listings("pending");
+    if (storageConfigured()) await checkStorage();
+    return Response.json({status:"ok",database:process.env.DATABASE_URL?"postgresql":"sqlite",storage:storageConfigured()?"s3":"local"}, {headers:{"Cache-Control":"no-store","X-Robots-Tag":"noindex"}});
+  } catch { return Response.json({status:"unavailable"}, {status:503}); }
 }

@@ -35,12 +35,12 @@ export async function POST(request: NextRequest) {
     );
     if (!repo) return fail("Enter a public GitHub repository.", 400);
     try {
-      const proof = startProof(repo.owner + "/" + repo.repo);
+      const proof = await startProof(repo.owner + "/" + repo.repo);
       const result = NextResponse.json({ phrase: proof.phrase });
       result.cookies.set("devshare_proof", proof.token, {
         httpOnly: true,
         sameSite: "strict",
-        secure: request.nextUrl.protocol === "https:",
+        secure: siteUrl.protocol === "https:",
         maxAge: 900,
         path: "/api/publish",
       });
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
   if (data.action !== "verify") return fail("Unknown action.", 400);
   const token = request.cookies.get("devshare_proof")?.value || "",
-    proof = getProof(token);
+    proof = await getProof(token);
   if (!proof) return fail("The verification expired. Start again.", 410);
   const match =
     typeof data.gist === "string" &&
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       400,
     );
   try {
-    if(!reserveAttempt(token))return fail("Verification attempts exhausted. Start a new verification.",429);
+    if(!(await reserveAttempt(token)))return fail("Verification attempts exhausted. Start a new verification.",429);
     const [gr, rr] = await Promise.all([
       github("gists/" + match[1]),
       github("repos/" + proof.repo),
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
         "Verification failed. The personal repository and Gist must have the same owner and the file must match the challenge.",
         403,
       );
-    submit(token, repo, summary);
+    await submit(token, repo, summary);
     const result = NextResponse.json({
       status: "pending",
       name: repo.full_name,

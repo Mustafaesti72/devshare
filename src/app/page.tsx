@@ -5,6 +5,6 @@ export const metadata = {
   title: "Open source index",
   alternates: { canonical: "/" },
 };
-export default function Home() {
-  return <Directory published={listings("approved")} />;
+export default async function Home() {
+  return <Directory published={await listings("approved")} />;
 }

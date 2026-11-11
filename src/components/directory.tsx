@@ -434,7 +434,7 @@ export function Directory({
               <article className="feed-item" key={p.id}>
                 <Link href={path(p)} aria-label={guide[p.name][0]}>
                   <Image
-                    src={"/owners/" + p.name + ".png"}
+                    src={"/api/media/" + p.name + ".png"}
                     width={54}
                     height={54}
                     alt=""
@@ -501,7 +501,7 @@ export function Directory({
           <aside className="feed-rail">
             <section className="feed-feature">
               <Image
-                src="/owners/duckdb.png"
+                src="/api/media/duckdb.png"
                 alt=""
                 width={52}
                 height={52}
@@ -523,7 +523,7 @@ export function Directory({
                 picks.map((p) => (
                   <div key={p.id}>
                     <Image
-                      src={"/owners/" + p.name + ".png"}
+                      src={"/api/media/" + p.name + ".png"}
                       alt=""
                       width={24}
                       height={24}

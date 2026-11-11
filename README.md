@@ -59,3 +59,12 @@ Use Node 24. The Dockerfile builds the app and  .railway/railway.ts checks /api/
 Submissions require editorial approval. From a Railway service shell, run node scripts/review.mjs to list pending submissions and node scripts/review.mjs approved ID to publish a reviewed listing. Back up the persistent SQLite files using a SQLite-aware backup process before moving storage.
 
 The public directory contains real upstream repository snapshots. The separate demo catalog contains fictional examples. Reader saves stay in the browser. Payments are inactive. Six editorial guides are available at /blog.
+
+
+## Production storage
+
+Railway Postgres stores repository ownership challenges, submissions and moderation records. DATABASE_URL uses the private Postgres connection. Startup initializes the schema under an advisory lock and imports the previous SQLite records once, in a transaction. The previous SQLite file stays on /data for recovery. Local development without DATABASE_URL continues to use SQLite.
+
+Railway devshare-assets stores the 52 catalog PNGs under owners/. The application reads them through /api/media/[name] with a catalog allowlist, cache headers and conditional requests. Bucket credentials stay on the server. Run npm run assets:sync to upload and byte-verify the catalog images. User-provided image uploads are not exposed by this release.
+
+Run node scripts/check-storage.mjs inside the deployed service to test PostgreSQL concurrency and moderation in an isolated temporary schema, and to verify a bucket image. The temporary schema is removed after the check. Run node scripts/review.mjs inside the service to moderate real submissions.
