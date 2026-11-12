@@ -1,4 +1,7 @@
 import Image from "next/image";
+import { SaveSource } from "@/components/save-source";
+import { ShareLink } from "@/components/share-link";
+import { parseSourceSnapshots } from "@/lib/github-input";
 import { ProjectEngagement } from "@/components/project-engagement";
 import { engagementToken } from "@/lib/engagement.mjs";
 import Link from "next/link";
@@ -24,10 +27,14 @@ export async function generateMetadata(props: Props) {
 }
 export default async function Showcase(props: Props) {
   const row = await find(props);
+  const source = parseSourceSnapshots(JSON.stringify([row.repository]))[0];
   const structured = {
     "@context": "https://schema.org",
     "@type": "SoftwareSourceCode",
     name: row.full_name,
+    datePublished: row.published_at
+      ? new Date(row.published_at).toISOString()
+      : undefined,
     description: row.summary,
     codeRepository: "https://github.com/" + row.full_name,
     url: new URL("/showcase/" + row.full_name, siteUrl).href,
@@ -56,9 +63,25 @@ export default async function Showcase(props: Props) {
           className="btn"
           href={"/inspect?repo=" + encodeURIComponent(row.full_name)}
         >
-          Inspect and save
+          Inspect current metadata
         </Link>
       </div>
+      <div className="account-actions publication-actions">
+        {source && (
+          <SaveSource repository={source} label={row.full_name} collections />
+        )}
+        <ShareLink href={"/showcase/" + row.full_name} />
+        <Link href="/launches">More maintainer launches →</Link>
+      </div>
+      {row.published_at && (
+        <p className="account-note">
+          First published on DevShare ·{" "}
+          {new Date(row.published_at).toLocaleDateString("en-US", {
+            dateStyle: "medium",
+            timeZone: "UTC",
+          })}
+        </p>
+      )}
       {row.has_image && (
         <Image
           className="project-cover"

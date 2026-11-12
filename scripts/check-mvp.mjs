@@ -95,6 +95,8 @@ try {
     true,
   );
   row = await publishing.publishedProject("mvp-check/tool");
+  const firstPublished = row.published_at;
+  assert.ok(Number.isSafeInteger(firstPublished));
   assert.equal(row.repository.language, "TypeScript");
   assert.equal(row.category, "Web");
   const token = engagement.engagementToken(row.id),
@@ -239,6 +241,46 @@ try {
     ),
     true,
   );
+
+  const proof2 = await db.startProof("mvp-check/new-tool");
+  await db.submit(
+    proof2.token,
+    { id: 9912, full_name: "mvp-check/new-tool", owner: { id: 991 } },
+    "Newer project for release-order checks.",
+  );
+  const next = (await publishing.pendingReviews("pending"))[0];
+  await publishing.moderate(
+    next.id,
+    next.revision,
+    "approved",
+    "Reviewed the newer project",
+    991,
+  );
+  const refresh = await db.startProof("mvp-check/tool");
+  await db.submit(
+    refresh.token,
+    { id: 9911, full_name: "mvp-check/tool", owner: { id: 991 } },
+    "Resubmitted older project for release-order checks.",
+  );
+  const updated = (await publishing.pendingReviews("pending"))[0];
+  await publishing.moderate(
+    updated.id,
+    updated.revision,
+    "approved",
+    "Reviewed the updated project",
+    991,
+  );
+  assert.equal(
+    (await publishing.publishedProject("mvp-check/tool")).published_at,
+    firstPublished,
+  );
+  assert.equal((await db.listings("approved"))[0].id, 9912);
+  const { launchFeed } = await import("../src/lib/launch-feed.ts");
+  assert.ok(
+    launchFeed(await db.listings("approved"), "https://example.test").includes(
+      "devshare:github:9911",
+    ),
+  );
   const req = new Request("http://localhost", {
     headers: { "x-real-ip": "192.0.2.1" },
   });
@@ -258,6 +300,8 @@ try {
       schemaIsolation: "passed",
       largeSourceLibrary: "passed",
       publicProfiles: "passed",
+      firstPublicationOrder: "passed",
+      launchFeed: "passed",
       publicationMetadata: "passed",
       analyticsDeduplication: "passed",
       tokenReplay: "passed",

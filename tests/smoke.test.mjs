@@ -17,6 +17,7 @@ for (const [route, text] of [
   ["/collections", "<h1>Collections</h1>"],
   ["/topics/testing", "Testing tools"],
   ["/trending", "Most-starred tools"],
+  ["/launches", "Maintainer launches"],
 ]) {
   test(`${route} supplies server HTML and preview noindex`, async () => {
     const response = await fetch(base + route);
@@ -66,4 +67,11 @@ test("shared search restores its server-rendered language and license filters", 
   assert.ok(html.includes('aria-label="Save pytest"'));
   assert.ok(!html.includes('aria-label="Save Formwork"'));
   assert.ok(html.includes("Language and license"));
+});
+
+test("RSS responds with XML and its public self link", async () => {
+  const response = await fetch(base + "/feed.xml");
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /application\/rss\+xml/);
+  assert.ok((await response.text()).includes('<rss version="2.0"'));
 });

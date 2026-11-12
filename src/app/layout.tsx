@@ -9,6 +9,7 @@ import "./mvp.css";
 import { ResearchProvider } from "@/lib/research";
 export const metadata: Metadata = {
   metadataBase: siteUrl,
+  alternates: { types: { "application/rss+xml": "/feed.xml" } },
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
   title: {
     default: "Discover developer projects | DevShare",

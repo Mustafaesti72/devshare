@@ -69,3 +69,16 @@ npm run test:smoke
 scripts/check-mvp.mjs requires a PostgreSQL test connection. It creates and verifies its own random mvp*check*\* schema, exercises publication metadata, analytics deduplication, report resolution, profile moderation, stale revisions, request limits and deletion cascades, then removes that schema. GitHub Actions runs this against a fresh PostgreSQL service.
 
 scripts/check-storage.mjs separately checks sessions, ownership proofs, library concurrency and cover storage in an isolated random schema and its own temporary bucket keys. Run it inside the deployed service when validating storage changes. Neither diagnostic intentionally modifies production records.
+
+## Milestone: launch discovery
+
+Completed acceptance criteria:
+
+- /launches shows reviewed maintainer publications ordered by their first approval date. Resubmissions and later approvals retain that date and do not promote an old project as a new launch. Public discovery includes the latest 100 approved publications.
+- Discovery distinguishes maintainer launches from the curated source directory. Keyword searches match all words across repository names, summaries, languages and topics. Category, language and normalized license filters can be combined and removed individually.
+- Share this view copies a canonical /explore URL containing the active filters. The GET search form opens the same result set on reload, and clipboard failures expose a selectable link.
+- Published project pages can save their existing metadata directly to the private library and add it to a collection without consuming the GitHub inspector budget.
+- /feed.xml exposes the latest 50 approved launches as RSS. Repository IDs provide stable feed identifiers across renames. XML content is escaped and invalid control characters are removed. Curated snapshots are not presented as maintainer launches.
+- The launches page is included in the sitemap and the homepage advertises the RSS feed. No payment or payout integration is enabled by this milestone.
+
+Discovery and RSS regression tests run with test:unit. The PostgreSQL diagnostic exercises publication ordering after resubmission and RSS visibility through the reviewed-listing adapter.

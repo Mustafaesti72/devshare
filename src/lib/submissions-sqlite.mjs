@@ -95,7 +95,7 @@ export function submit(token, repo, summary, category = "Tooling") {
 export function listings(status) {
   return db()
     .prepare(
-      "SELECT id,full_name,summary,submitted,repository,category FROM listings WHERE status=? ORDER BY submitted DESC LIMIT 100",
+      "SELECT id,full_name,summary,submitted,repository,category,(SELECT min(r.at) FROM reviews r WHERE r.id=listings.id AND r.action='approved') AS published_at FROM listings WHERE status=? ORDER BY CASE WHEN status='approved' THEN COALESCE((SELECT min(r.at) FROM reviews r WHERE r.id=listings.id AND r.action='approved'),submitted) ELSE submitted END DESC,id LIMIT 100",
     )
     .all(status)
     .map((row) => ({

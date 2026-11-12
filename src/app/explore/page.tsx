@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { listings } from "@/lib/submissions.mjs";
-export const dynamic = "force-dynamic";
 import { Directory } from "@/components/directory";
-import { categoryNames } from "@/lib/categories";
+import { discoveryFilters } from "@/lib/discovery";
+export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Search developer projects",
   robots: { index: false, follow: true },
@@ -13,23 +13,19 @@ export default async function Explore({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const p = await searchParams;
-  if (!Object.keys(p).length) redirect("/");
-  const value = (key: string) =>
-    typeof p[key] === "string" ? (p[key] as string).slice(0, 200) : "";
-  const group = categoryNames.includes(value("group")) ? value("group") : "All";
-  const sort = ["stars", "updated"].includes(value("sort"))
-    ? value("sort")
-    : "editor";
+  const params = await searchParams;
+  if (!Object.keys(params).length) redirect("/");
+  const f = discoveryFilters(params);
   return (
     <Directory
+      key={JSON.stringify(f)}
       published={await listings("approved")}
-      key={JSON.stringify(p)}
-      initialQuery={value("q")}
-      initialGroup={group}
-      initialLanguage={value("lang")}
-      initialLicense={value("license")}
-      initialSort={sort}
+      initialQuery={f.q}
+      initialGroup={f.group}
+      initialLanguage={f.language}
+      initialLicense={f.license}
+      initialSort={f.sort}
+      initialSource={f.source}
     />
   );
 }

@@ -14,7 +14,7 @@ export async function publishedProject(fullName) {
       await pool.query(
         `SELECT l.id::float8 AS id,l.full_name,l.summary,l.repository,l.category,l.submitted::float8 AS submitted,l.revision::float8 AS revision,
     EXISTS(SELECT 1 FROM listing_images WHERE listing_id=l.id) AS has_image,u.id AS creator_id,u.display_name AS creator_name,
-    (SELECT max(r.at)::float8 FROM reviews r WHERE r.id=l.id AND r.action='approved') AS published_at
+    (SELECT min(r.at)::float8 FROM reviews r WHERE r.id=l.id AND r.action='approved') AS published_at
     FROM listings l LEFT JOIN users u ON u.github_id=l.owner_id WHERE lower(l.full_name)=lower($1) AND l.status='approved' AND COALESCE(u.is_hidden,FALSE)=FALSE`,
         [fullName],
       )

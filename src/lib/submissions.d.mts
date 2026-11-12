@@ -4,6 +4,7 @@ type Listing = {
   full_name: string;
   summary: string;
   submitted: number;
+  published_at?: number | null;
   category?: string;
   repository?: PublicRepository;
 };

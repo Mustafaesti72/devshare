@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test:catalog": "node --experimental-strip-types --test tests/catalog.test.mjs",
     "test:smoke": "node --test tests/smoke.test.mjs",
-    "test:unit": "node --experimental-strip-types --test tests/catalog.test.mjs tests/github-input.test.mjs tests/research-data.test.mjs tests/publishing.test.mjs tests/revenue.test.mjs tests/workspace.test.mjs tests/members.test.mjs",
+    "test:unit": "node --experimental-strip-types --test tests/catalog.test.mjs tests/github-input.test.mjs tests/research-data.test.mjs tests/publishing.test.mjs tests/revenue.test.mjs tests/workspace.test.mjs tests/members.test.mjs tests/discovery.test.mjs tests/launch-feed.test.mjs",
     "revenue:rehearse": "node --experimental-strip-types scripts/rehearse.mjs",
     "assets:sync": "node scripts/sync-assets.mjs"
   },

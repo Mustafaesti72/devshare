@@ -1,7 +1,14 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useWorkspace } from "./workspace";
+import {
+  discoveryUrl,
+  filterDiscovery,
+  licenseKey,
+  type DiscoveryFilters,
+} from "@/lib/discovery";
+import { ShareLink } from "./share-link";
+import { SaveSource } from "./save-source";
 import { Modal } from "./modal";
 
 import { useState } from "react";
@@ -329,24 +336,8 @@ const guide: Record<string, [string, string, string, string]> = {
 };
 const path = (p: PublicRepository) => `/directory/${p.owner}/${p.name}`;
 function Save({ p, label }: { p: PublicRepository; label?: string }) {
-  const { references, saveReference } = useSourceReferences();
-  const { notify } = useWorkspace();
-  const saved = references.some((s) => s.id === p.id);
   return (
-    <button
-      className="dir-save"
-      aria-label={`${saved ? "Saved" : "Save"} ${label || guide[p.name]?.[0] || p.name}`}
-      disabled={saved}
-      onClick={() => {
-        if (!saveReference(p))
-          notify(
-            "Your library holds up to 500 sources. Remove a source before adding another.",
-          );
-      }}
-    >
-      <Icon name={saved ? "check" : "bookmark"} size={16} />
-      {saved ? "Saved" : "Save"}
-    </button>
+    <SaveSource repository={p} label={label || guide[p.name]?.[0] || p.name} />
   );
 }
 type Publication = {
@@ -356,6 +347,8 @@ type Publication = {
   category?: string;
   repository?: PublicRepository;
   has_image?: boolean;
+  submitted?: number;
+  published_at?: number | null;
 };
 export function Directory({
   published,
@@ -364,13 +357,14 @@ export function Directory({
   initialSort = "editor",
   initialLanguage = "",
   initialLicense = "",
-  heading = "Open source index",
+  initialSource = "all",
   intro = "",
 }: {
   published: Publication[];
   initialQuery?: string;
   initialGroup?: string;
   initialSort?: string;
+  initialSource?: DiscoveryFilters["source"];
   initialLanguage?: string;
   initialLicense?: string;
   heading?: string;
@@ -379,6 +373,8 @@ export function Directory({
   const [query, setQuery] = useState(initialQuery),
     [group, setGroup] = useState(initialGroup),
     [sort, setSort] = useState(initialSort);
+  const [source, setSource] =
+    useState<DiscoveryFilters["source"]>(initialSource);
   const [language, setLanguage] = useState(initialLanguage),
     [license, setLicense] = useState(initialLicense);
   const [selected, setSelected] = useState<number[]>([]),
@@ -409,49 +405,73 @@ export function Directory({
     publicationById.has(repo.id)
       ? "/showcase/" + publicationById.get(repo.id)!.full_name
       : path(repo);
-  const matches = (
-    name: string,
-    summary: string,
-    tag: string,
-    lang: string | null,
-    spdx: string | null,
-  ) =>
-    (group === "All" || tag === group) &&
-    (!language || lang === language) &&
-    (!license || (spdx || "unreported") === license) &&
-    (name + " " + summary + " " + (lang || ""))
-      .toLowerCase()
-      .includes(query.trim().toLowerCase());
-  const rows = repositories.filter((repo) =>
-    matches(
-      repo.fullName,
-      description(repo),
-      category(repo),
-      repo.language,
-      repo.license,
-    ),
-  );
-  const legacy = published.filter(
-    (row) =>
-      !ids.has(row.id) &&
-      matches(
-        row.full_name,
-        row.summary,
-        row.category || "Tooling",
-        null,
-        null,
-      ),
-  );
-  if (sort === "stars") rows.sort((a, b) => b.stars - a.stars);
-  if (sort === "updated")
-    rows.sort((a, b) => (b.pushedAt || "").localeCompare(a.pushedAt || ""));
+  const filters: DiscoveryFilters = {
+    q: query,
+    group,
+    language,
+    license,
+    source,
+    sort: ["stars", "updated", "newest"].includes(sort)
+      ? (sort as DiscoveryFilters["sort"])
+      : "editor",
+  };
+  const candidates = [
+    ...repositories.map((repo) => ({
+      id: repo.id,
+      name: repo.fullName,
+      description: description(repo),
+      category: category(repo),
+      language: repo.language,
+      license: repo.license,
+      stars: repo.stars,
+      updated: repo.pushedAt,
+      published: publicationById.has(repo.id)
+        ? publicationById.get(repo.id)!.published_at ||
+          publicationById.get(repo.id)!.submitted ||
+          0
+        : 0,
+      source: publicationById.has(repo.id)
+        ? ("community" as const)
+        : ("catalog" as const),
+      topics: repo.topics,
+    })),
+    ...published
+      .filter((row) => !ids.has(row.id))
+      .map((row) => ({
+        id: row.id,
+        name: row.full_name,
+        description: row.summary,
+        category: row.category || "Tooling",
+        language: null,
+        license: null,
+        stars: 0,
+        updated: null,
+        published: row.published_at || row.submitted || 0,
+        source: "community" as const,
+        topics: [],
+      })),
+  ];
+  const filtered = filterDiscovery(candidates, filters);
+  const repositoryById = new Map(repositories.map((repo) => [repo.id, repo]));
+  const pageHeading =
+    source === "community"
+      ? "Maintainer launches"
+      : source === "catalog"
+        ? "Curated directory"
+        : group !== "All"
+          ? group + " tools"
+          : sort === "stars"
+            ? "Most-starred tools"
+            : "Open source index";
+  const unchanged =
+    group === initialGroup && sort === initialSort && source === initialSource;
   const picks = repositories.filter((repo) => selected.includes(repo.id));
   const { references } = useSourceReferences();
   const total = new Set([
     ...repositories.map((repo) => repo.id),
-    ...legacy.map((repo) => repo.id),
+    ...published.map((repo) => repo.id),
   ]).size;
-  const resultCount = rows.length + legacy.length;
+  const resultCount = filtered.length;
   const languages = [
     ...new Set(
       repositories
@@ -460,7 +480,7 @@ export function Directory({
     ),
   ].sort();
   const licenses = [
-    ...new Set(repositories.map((repo) => repo.license || "unreported")),
+    ...new Set(repositories.map((repo) => licenseKey(repo.license))),
   ].sort();
   function toggle(id: number) {
     setSelected((current) =>
@@ -476,22 +496,27 @@ export function Directory({
       <div className="feed-frame">
         <header className="feed-heading">
           <div>
-            <h1>{heading}</h1>
-            <p>{intro || total + " public repositories"}</p>
+            <h1>{pageHeading}</h1>
+            <p>{unchanged && intro ? intro : total + " public repositories"}</p>
           </div>
-          <Link href="/inspect">
-            Inspect a GitHub URL <Icon name="arrow" size={15} />
-          </Link>
+          <div className="feed-heading-actions">
+            <ShareLink href={discoveryUrl(filters)} label="Share this view" />
+            <Link href="/inspect">
+              Inspect a GitHub URL <Icon name="arrow" size={15} />
+            </Link>
+          </div>
         </header>
         <div className="feed-layout">
           <section id="repositories" aria-label="Project feed">
             <form className="feed-search-form" method="get" action="/explore">
               <input type="hidden" name="group" value={group} />
+              <input type="hidden" name="source" value={source} />
               <div className="feed-toolbar">
                 <label>
                   <Icon name="search" size={17} />
                   <input
                     name="q"
+                    maxLength={200}
                     aria-label="Search open source index"
                     placeholder="Search the directory"
                     value={query}
@@ -507,6 +532,7 @@ export function Directory({
                   <option value="editor">Editor’s order</option>
                   <option value="stars">Most stars</option>
                   <option value="updated">Latest push</option>
+                  <option value="newest">Newest launches first</option>
                 </select>
                 <button className="btn" type="submit">
                   Search
@@ -548,6 +574,74 @@ export function Directory({
                 </div>
               </details>
             </form>
+            <nav className="feed-sources" aria-label="Project sources">
+              {[
+                ["all", "All projects"],
+                ["community", "Maintainer launches"],
+                ["catalog", "Curated directory"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  aria-pressed={source === value}
+                  onClick={() => setSource(value as DiscoveryFilters["source"])}
+                >
+                  {label}
+                  <span>
+                    {value === "all"
+                      ? candidates.length
+                      : candidates.filter((row) => row.source === value).length}
+                  </span>
+                </button>
+              ))}
+              <Link href="/launches">New launches →</Link>
+            </nav>
+            {(query || group !== "All" || language || license) && (
+              <div className="feed-active-filters" aria-label="Active filters">
+                {[
+                  ...(query
+                    ? [{ label: "Search: " + query, clear: () => setQuery("") }]
+                    : []),
+                  ...(group !== "All"
+                    ? [
+                        {
+                          label: "Category: " + group,
+                          clear: () => setGroup("All"),
+                        },
+                      ]
+                    : []),
+                  ...(language
+                    ? [
+                        {
+                          label: "Language: " + language,
+                          clear: () => setLanguage(""),
+                        },
+                      ]
+                    : []),
+                  ...(license
+                    ? [
+                        {
+                          label:
+                            "License: " +
+                            (licenseKey(license) === "unreported"
+                              ? "Unspecified"
+                              : license),
+                          clear: () => setLicense(""),
+                        },
+                      ]
+                    : []),
+                ].map((filter) => (
+                  <button
+                    key={filter.label}
+                    title={filter.label}
+                    aria-label={"Remove filter " + filter.label}
+                    onClick={filter.clear}
+                  >
+                    {filter.label}
+                    <Icon name="close" size={12} />
+                  </button>
+                ))}
+              </div>
+            )}
             <nav className="feed-tabs" aria-label="Repository categories">
               {["All", "Testing", "Data", "Tooling", "Web"].map((value) => (
                 <button
@@ -558,90 +652,107 @@ export function Directory({
                   {value === "All" ? "All projects" : value}
                 </button>
               ))}
-              <span>{resultCount} results</span>
+              <span>
+                {resultCount} {resultCount === 1 ? "result" : "results"}
+              </span>
             </nav>
-            {legacy.map((row) => (
-              <article className="feed-item" key={row.id}>
-                <span className="source-reference-mark">
-                  <Icon name="git" size={24} />
-                </span>
-                <div className="feed-item-copy">
-                  <Link href={"/showcase/" + row.full_name}>
-                    <h2>{row.full_name}</h2>
-                    <p>{row.summary}</p>
-                  </Link>
-                  <span>Maintainer publication</span>
-                </div>
-                <Link
-                  className="plain-button"
-                  href={"/inspect?repo=" + encodeURIComponent(row.full_name)}
-                >
-                  Inspect source
-                </Link>
-              </article>
-            ))}
-            {rows.map((repo) => (
-              <article className="feed-item" key={repo.id}>
-                <Link href={href(repo)} aria-label={title(repo)}>
-                  {records.some((item) => item.id === repo.id) ? (
-                    <Image
-                      src={"/api/media/" + repo.name + ".png"}
-                      width={54}
-                      height={54}
-                      alt=""
-                      unoptimized
-                    />
-                  ) : (
+            {filtered.map((candidate) => {
+              const repo = repositoryById.get(candidate.id);
+              if (!repo) {
+                const row = publicationById.get(candidate.id)!;
+                return (
+                  <article className="feed-item" key={row.id}>
                     <span className="source-reference-mark">
                       <Icon name="git" size={24} />
                     </span>
-                  )}
-                </Link>
-                <div className="feed-item-copy">
-                  <Link href={href(repo)}>
-                    <h2>{title(repo)}</h2>
-                    <p>{description(repo)}</p>
-                  </Link>
-                  <div className="feed-tags">
-                    <Link href={"/topics/" + category(repo).toLowerCase()}>
-                      {category(repo)}
-                    </Link>
-                    <span>{repo.language || "Language unreported"}</span>
-                    <span>
-                      {repo.license === "NOASSERTION"
-                        ? "Review license"
-                        : repo.license || "Review license"}
-                    </span>
-                    <button
-                      aria-pressed={selected.includes(repo.id)}
-                      disabled={
-                        !selected.includes(repo.id) && selected.length === 3
+                    <div className="feed-item-copy">
+                      <Link href={"/showcase/" + row.full_name}>
+                        <h2>{row.full_name}</h2>
+                        <p>{row.summary}</p>
+                      </Link>
+                      <span>Maintainer publication</span>
+                    </div>
+                    <Link
+                      className="plain-button"
+                      href={
+                        "/inspect?repo=" + encodeURIComponent(row.full_name)
                       }
-                      aria-label={"Compare " + title(repo)}
-                      onClick={() => toggle(repo.id)}
                     >
-                      <Icon
-                        name={selected.includes(repo.id) ? "check" : "plus"}
-                        size={13}
+                      Inspect source
+                    </Link>
+                  </article>
+                );
+              }
+              return (
+                <article className="feed-item" key={repo.id}>
+                  <Link href={href(repo)} aria-label={title(repo)}>
+                    {records.some((item) => item.id === repo.id) ? (
+                      <Image
+                        src={"/api/media/" + repo.name + ".png"}
+                        width={54}
+                        height={54}
+                        alt=""
+                        unoptimized
                       />
-                      Compare
-                    </button>
+                    ) : (
+                      <span className="source-reference-mark">
+                        <Icon name="git" size={24} />
+                      </span>
+                    )}
+                  </Link>
+                  <div className="feed-item-copy">
+                    <Link href={href(repo)}>
+                      <h2>{title(repo)}</h2>
+                      <p>{description(repo)}</p>
+                    </Link>
+                    <div className="feed-tags">
+                      <Link href={"/topics/" + category(repo).toLowerCase()}>
+                        {category(repo)}
+                      </Link>
+                      <span>{repo.language || "Language unreported"}</span>
+                      {publicationById.has(repo.id) && (
+                        <span className="maintainer-badge">
+                          Verified maintainer
+                        </span>
+                      )}
+                      <span>
+                        {repo.license === "NOASSERTION"
+                          ? "Review license"
+                          : repo.license || "Review license"}
+                      </span>
+                      <button
+                        aria-pressed={selected.includes(repo.id)}
+                        disabled={
+                          !selected.includes(repo.id) && selected.length === 3
+                        }
+                        aria-label={"Compare " + title(repo)}
+                        onClick={() => toggle(repo.id)}
+                      >
+                        <Icon
+                          name={selected.includes(repo.id) ? "check" : "plus"}
+                          size={13}
+                        />
+                        Compare
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="feed-item-actions">
-                  <span
-                    title={repo.stars.toLocaleString("en-US") + " GitHub stars"}
-                  >
-                    <Icon name="star" size={14} />
-                    {Intl.NumberFormat("en", {
-                      notation: "compact",
-                      maximumFractionDigits: 1,
-                    }).format(repo.stars)}
-                  </span>
-                  <Save p={repo} label={title(repo)} />
-                </div>
-              </article>
-            ))}
+                  <div className="feed-item-actions">
+                    <span
+                      title={
+                        repo.stars.toLocaleString("en-US") + " GitHub stars"
+                      }
+                    >
+                      <Icon name="star" size={14} />
+                      {Intl.NumberFormat("en", {
+                        notation: "compact",
+                        maximumFractionDigits: 1,
+                      }).format(repo.stars)}
+                    </span>
+                    <Save p={repo} label={title(repo)} />
+                  </div>
+                </article>
+              );
+            })}
             {!resultCount && (
               <div className="feed-empty">
                 No matching projects.{" "}
@@ -652,6 +763,7 @@ export function Directory({
                     setGroup("All");
                     setLanguage("");
                     setLicense("");
+                    setSource("all");
                   }}
                 >
                   Clear filters
@@ -661,6 +773,8 @@ export function Directory({
           </section>
         </div>
         <nav className="directory-reading" aria-label="More ways to discover">
+          <Link href="/launches">Maintainer launches</Link>
+          <Link href="/feed.xml">RSS feed</Link>
           <Link href="/trending">Most starred repositories</Link>
           <Link href="/blog">Developer guides</Link>
           {["testing", "data", "tooling", "web"].map((value) => (

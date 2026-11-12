@@ -23,6 +23,7 @@ export function initialize() {
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1;
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS repository JSONB NOT NULL DEFAULT '{}'::jsonb;
       ALTER TABLE listings ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'Tooling';
+      CREATE INDEX IF NOT EXISTS reviews_listing_action_at ON reviews(id,action,at);
       CREATE INDEX IF NOT EXISTS listings_status_submitted ON listings(status, submitted DESC);
       CREATE INDEX IF NOT EXISTS proofs_expiry ON proofs(expires);
       CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY,github_id BIGINT NOT NULL UNIQUE,github_login TEXT NOT NULL,display_name TEXT NOT NULL,bio TEXT NOT NULL DEFAULT '',website TEXT NOT NULL DEFAULT '',avatar_url TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
@@ -138,7 +139,7 @@ export async function listings(status) {
   await initialize();
   return (
     await pool.query(
-      "SELECT id::float8 AS id,full_name,summary,submitted::float8 AS submitted,category,repository FROM listings WHERE status=$1 ORDER BY submitted DESC LIMIT 100",
+      "SELECT id::float8 AS id,full_name,summary,submitted::float8 AS submitted,category,repository,(SELECT min(r.at)::float8 FROM reviews r WHERE r.id=listings.id AND r.action='approved') AS published_at FROM listings WHERE status=$1 ORDER BY CASE WHEN status='approved' THEN COALESCE((SELECT min(r.at) FROM reviews r WHERE r.id=listings.id AND r.action='approved'),submitted) ELSE submitted END DESC,id LIMIT 100",
       [status],
     )
   ).rows;
