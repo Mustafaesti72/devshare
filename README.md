@@ -82,3 +82,9 @@ Completed acceptance criteria:
 - The launches page is included in the sitemap and the homepage advertises the RSS feed. No payment or payout integration is enabled by this milestone.
 
 Discovery and RSS regression tests run with test:unit. The PostgreSQL diagnostic exercises publication ordering after resubmission and RSS visibility through the reviewed-listing adapter.
+
+## Library research and exports
+
+Saved-project searches include private notes, languages, licenses, topics and collection names. Readers can combine decision and collection filters, find projects outside any collection, and order results by name or recorded GitHub stars. The overview counts the entire library while the result label reports the current filtered view.
+
+Export library creates files in the browser. Full device library JSON contains all current source snapshots, saved project IDs, notes, collections and follows regardless of filters. Only explicit library fields are included; account sessions and provider credentials are not read. Current view Markdown contains only matching projects, source links, decision statuses, notes and collection names. Markup is escaped and unsafe or credential-bearing source links are omitted. Exporting does not modify or upload library data.

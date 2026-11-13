@@ -1,5 +1,11 @@
 "use client";
 import { useState } from "react";
+import { LibraryExport } from "./library-export";
+import {
+  filterLibrary,
+  libraryStats,
+  type LibraryItem,
+} from "@/lib/library-tools";
 import { useSourceReferences, sourceKey } from "@/lib/source-references";
 import { SourceReferenceCard } from "./source-reference-card";
 import repositories from "@/lib/directory.json";
@@ -504,27 +510,58 @@ export function PersonalCollectionPage({ id }: { id: string }) {
 export function ResearchLibrary() {
   const { saved, toggleSave } = useWorkspace();
   const { references } = useSourceReferences();
-  const { notes, collections } = useResearch();
+  const { notes, collections, following } = useResearch();
   const sync = useWorkspaceSync();
   const [query, setQuery] = useState("");
   const [view, setView] = useStored("drp-library-view", "list");
   const [status, setStatus] = useState("");
   const [noteId, setNoteId] = useState<string | null>(null);
-  const list = projects.filter(
-    (p) =>
-      saved.includes(p.id) &&
-      `${p.name} ${p.description}`
-        .toLowerCase()
-        .includes(query.toLowerCase()) &&
-      (!status || (notes[p.id]?.status || "considering") === status),
-  );
-  const sourceList = references.filter(
-    (p) =>
-      `${p.fullName} ${p.description}`
-        .toLowerCase()
-        .includes(query.toLowerCase()) &&
-      (!status || (notes[sourceKey(p)]?.status || "considering") === status),
-  );
+  const [collectionFilter, setCollectionFilter] = useState("");
+  const [sort, setSort] = useState("saved");
+  const allItems: LibraryItem[] = [
+    ...references.map((source) => ({
+      id: sourceKey(source),
+      name: source.fullName,
+      description: source.description,
+      url: source.sourceUrl,
+      language: source.language,
+      license: source.license,
+      stars: source.stars,
+      topics: source.topics,
+    })),
+    ...projects
+      .filter((project) => saved.includes(project.id))
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        url: projectPath(project),
+        language: project.language,
+        license: project.license,
+        stars: 0,
+        topics: [],
+      })),
+  ];
+  const filtered = filterLibrary(allItems, notes, collections, {
+    query,
+    decision: status,
+    collection: collectionFilter,
+    sort,
+  });
+  const order = new Map(filtered.map((item, index) => [item.id, index]));
+  const list = projects
+    .filter((project) => order.has(project.id))
+    .sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  const sourceList = references
+    .filter((source) => order.has(sourceKey(source)))
+    .sort((a, b) => order.get(sourceKey(a))! - order.get(sourceKey(b))!);
+  const stats = libraryStats(allItems, notes);
+  const hasFilters = !!(query || status || collectionFilter);
+  function clearFilters() {
+    setQuery("");
+    setStatus("");
+    setCollectionFilter("");
+  }
   return (
     <main id="main" className="inner-page research-library">
       <div className="page-heading">
@@ -532,11 +569,37 @@ export function ResearchLibrary() {
           <h1>My library</h1>
           <p>Saved projects, your notes, and where each option stands.</p>
         </div>
-        <Link href="/" className="btn primary">
-          <Icon name="plus" size={15} />
-          Find projects
-        </Link>
+        <div className="library-heading-actions">
+          <LibraryExport
+            workspace={{ references, saved, notes, collections, following }}
+            items={filtered}
+            ready={!!sync && !sync.loading}
+          />
+          <Link href="/" className="btn primary">
+            <Icon name="plus" size={15} />
+            Find projects
+          </Link>
+        </div>
       </div>
+      {(allItems.length > 0 || (sync && !sync.loading)) && (
+        <section className="library-overview" aria-label="Library overview">
+          {[
+            ["", "All saved", stats.total],
+            ["considering", "Considering", stats.considering],
+            ["shortlisted", "Shortlisted", stats.shortlisted],
+            ["using", "Using this", stats.using],
+          ].map(([value, label, count]) => (
+            <button
+              key={value}
+              aria-pressed={status === value}
+              onClick={() => setStatus(String(value))}
+            >
+              <span>{label}</span>
+              <strong>{count}</strong>
+            </button>
+          ))}
+        </section>
+      )}
       <FollowedMaintainers />
       <div className="library-filterbar">
         <div className="search-field">
@@ -544,7 +607,8 @@ export function ResearchLibrary() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your saved projects"
+            maxLength={200}
+            placeholder="Search projects, notes or collections"
             aria-label="Search saved projects"
           />
         </div>
@@ -557,6 +621,29 @@ export function ResearchLibrary() {
           <option value="considering">Considering</option>
           <option value="shortlisted">Shortlisted</option>
           <option value="using">Using this</option>
+        </select>
+        <select
+          aria-label="Filter by collection"
+          value={collectionFilter}
+          onChange={(event) => setCollectionFilter(event.target.value)}
+        >
+          <option value="">All collections</option>
+          <option value="__unfiled">Not in a collection</option>
+          {collections.map((collection) => (
+            <option key={collection.id} value={collection.id}>
+              {collection.name}
+              {collection.archived ? " (archived)" : ""}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Sort saved projects"
+          value={sort}
+          onChange={(event) => setSort(event.target.value)}
+        >
+          <option value="saved">Library order</option>
+          <option value="name">Name A–Z</option>
+          <option value="stars">GitHub stars</option>
         </select>
         <div className="segmented-control">
           <button
@@ -577,6 +664,18 @@ export function ResearchLibrary() {
           </button>
         </div>
       </div>
+      {sync && !sync.loading && (
+        <div className="library-results" role="status">
+          <span>
+            {filtered.length} of {allItems.length} saved projects
+          </span>
+          {hasFilters && (
+            <button className="plain-button" onClick={clearFilters}>
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
       {!sync || (sync.loading && !saved.length && !references.length) ? (
         <div className="empty-state" role="status">
           <h2>Loading your library…</h2>
@@ -726,6 +825,11 @@ export function ResearchLibrary() {
             Save projects from the directory, then add notes and a decision
             status here.
           </p>
+          {allItems.length > 0 && hasFilters && (
+            <button className="btn" onClick={clearFilters}>
+              Clear filters
+            </button>
+          )}
           <Link className="btn primary" href="/">
             Browse projects
             <Icon name="arrow" size={15} />
