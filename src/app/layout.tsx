@@ -6,6 +6,7 @@ import "./account.css";
 import "./workbench.css";
 import "./directory.css";
 import "./mvp.css";
+import "./discovery-motion.css";
 import { ResearchProvider } from "@/lib/research";
 export const metadata: Metadata = {
   metadataBase: siteUrl,

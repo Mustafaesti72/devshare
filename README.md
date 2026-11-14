@@ -88,3 +88,9 @@ Discovery and RSS regression tests run with test:unit. The PostgreSQL diagnostic
 Saved-project searches include private notes, languages, licenses, topics and collection names. Readers can combine decision and collection filters, find projects outside any collection, and order results by name or recorded GitHub stars. The overview counts the entire library while the result label reports the current filtered view.
 
 Export library creates files in the browser. Full device library JSON contains all current source snapshots, saved project IDs, notes, collections and follows regardless of filters. Only explicit library fields are included; account sessions and provider credentials are not read. Current view Markdown contains only matching projects, source links, decision statuses, notes and collection names. Markup is escaped and unsafe or credential-bearing source links are omitted. Exporting does not modify or upload library data.
+
+### Editorial design and motion
+
+The discovery homepage and developer guides adapt two AnimatedWebs free design briefs, [Condensed Editorial](https://animatedwebs.com/templates/editorial-condensed) and [Minimal Scroll-Driven Blog](https://animatedwebs.com/templates/field-notes-daily-scroll-blog), retrieved through the official MCP with an authenticated free account. Their license allows personal and commercial websites; raw prompts are not redistributed here.
+
+The implementation uses local CSS and existing React components. No AnimatedWebs key, external font, video, runtime API call or animation package is required. Headline entrances, spotlight focus/hover states, repository entrances and article reading progress respect `prefers-reduced-motion`. Scroll-driven effects use feature queries with visible static fallbacks. Spotlight data links to the real DuckDB directory entry. Catalog filters, saving and comparison retain their existing behavior.

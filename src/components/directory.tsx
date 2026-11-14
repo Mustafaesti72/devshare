@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { DiscoveryIntro } from "./discovery-intro";
 import Image from "next/image";
 import {
   discoveryUrl,
@@ -359,6 +360,7 @@ export function Directory({
   initialLicense = "",
   initialSource = "all",
   intro = "",
+  featured = false,
 }: {
   published: Publication[];
   initialQuery?: string;
@@ -369,6 +371,7 @@ export function Directory({
   initialLicense?: string;
   heading?: string;
   intro?: string;
+  featured?: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery),
     [group, setGroup] = useState(initialGroup),
@@ -492,11 +495,15 @@ export function Directory({
     );
   }
   return (
-    <main id="main" className="launch-feed">
+    <main
+      id="main"
+      className={`launch-feed${featured ? " discovery-index" : ""}`}
+    >
       <div className="feed-frame">
+        {featured && <DiscoveryIntro total={total} />}
         <header className="feed-heading">
           <div>
-            <h1>{pageHeading}</h1>
+            {featured ? <h2>{pageHeading}</h2> : <h1>{pageHeading}</h1>}
             <p>{unchanged && intro ? intro : total + " public repositories"}</p>
           </div>
           <div className="feed-heading-actions">
@@ -507,7 +514,7 @@ export function Directory({
           </div>
         </header>
         <div className="feed-layout">
-          <section id="repositories" aria-label="Project feed">
+          <section id="repositories" aria-label="Project feed" tabIndex={-1}>
             <form className="feed-search-form" method="get" action="/explore">
               <input type="hidden" name="group" value={group} />
               <input type="hidden" name="source" value={source} />
@@ -652,107 +659,109 @@ export function Directory({
                   {value === "All" ? "All projects" : value}
                 </button>
               ))}
-              <span>
+              <span role="status">
                 {resultCount} {resultCount === 1 ? "result" : "results"}
               </span>
             </nav>
-            {filtered.map((candidate) => {
-              const repo = repositoryById.get(candidate.id);
-              if (!repo) {
-                const row = publicationById.get(candidate.id)!;
-                return (
-                  <article className="feed-item" key={row.id}>
-                    <span className="source-reference-mark">
-                      <Icon name="git" size={24} />
-                    </span>
-                    <div className="feed-item-copy">
-                      <Link href={"/showcase/" + row.full_name}>
-                        <h2>{row.full_name}</h2>
-                        <p>{row.summary}</p>
-                      </Link>
-                      <span>Maintainer publication</span>
-                    </div>
-                    <Link
-                      className="plain-button"
-                      href={
-                        "/inspect?repo=" + encodeURIComponent(row.full_name)
-                      }
-                    >
-                      Inspect source
-                    </Link>
-                  </article>
-                );
-              }
-              return (
-                <article className="feed-item" key={repo.id}>
-                  <Link href={href(repo)} aria-label={title(repo)}>
-                    {records.some((item) => item.id === repo.id) ? (
-                      <Image
-                        src={"/api/media/" + repo.name + ".png"}
-                        width={54}
-                        height={54}
-                        alt=""
-                        unoptimized
-                      />
-                    ) : (
+            <div className="feed-results">
+              {filtered.map((candidate) => {
+                const repo = repositoryById.get(candidate.id);
+                if (!repo) {
+                  const row = publicationById.get(candidate.id)!;
+                  return (
+                    <article className="feed-item" key={row.id}>
                       <span className="source-reference-mark">
                         <Icon name="git" size={24} />
                       </span>
-                    )}
-                  </Link>
-                  <div className="feed-item-copy">
-                    <Link href={href(repo)}>
-                      <h2>{title(repo)}</h2>
-                      <p>{description(repo)}</p>
-                    </Link>
-                    <div className="feed-tags">
-                      <Link href={"/topics/" + category(repo).toLowerCase()}>
-                        {category(repo)}
+                      <div className="feed-item-copy">
+                        <Link href={"/showcase/" + row.full_name}>
+                          <h2>{row.full_name}</h2>
+                          <p>{row.summary}</p>
+                        </Link>
+                        <span>Maintainer publication</span>
+                      </div>
+                      <Link
+                        className="plain-button"
+                        href={
+                          "/inspect?repo=" + encodeURIComponent(row.full_name)
+                        }
+                      >
+                        Inspect source
                       </Link>
-                      <span>{repo.language || "Language unreported"}</span>
-                      {publicationById.has(repo.id) && (
-                        <span className="maintainer-badge">
-                          Verified maintainer
+                    </article>
+                  );
+                }
+                return (
+                  <article className="feed-item" key={repo.id}>
+                    <Link href={href(repo)} aria-label={title(repo)}>
+                      {records.some((item) => item.id === repo.id) ? (
+                        <Image
+                          src={"/api/media/" + repo.name + ".png"}
+                          width={54}
+                          height={54}
+                          alt=""
+                          unoptimized
+                        />
+                      ) : (
+                        <span className="source-reference-mark">
+                          <Icon name="git" size={24} />
                         </span>
                       )}
-                      <span>
-                        {repo.license === "NOASSERTION"
-                          ? "Review license"
-                          : repo.license || "Review license"}
-                      </span>
-                      <button
-                        aria-pressed={selected.includes(repo.id)}
-                        disabled={
-                          !selected.includes(repo.id) && selected.length === 3
-                        }
-                        aria-label={"Compare " + title(repo)}
-                        onClick={() => toggle(repo.id)}
-                      >
-                        <Icon
-                          name={selected.includes(repo.id) ? "check" : "plus"}
-                          size={13}
-                        />
-                        Compare
-                      </button>
+                    </Link>
+                    <div className="feed-item-copy">
+                      <Link href={href(repo)}>
+                        <h2>{title(repo)}</h2>
+                        <p>{description(repo)}</p>
+                      </Link>
+                      <div className="feed-tags">
+                        <Link href={"/topics/" + category(repo).toLowerCase()}>
+                          {category(repo)}
+                        </Link>
+                        <span>{repo.language || "Language unreported"}</span>
+                        {publicationById.has(repo.id) && (
+                          <span className="maintainer-badge">
+                            Verified maintainer
+                          </span>
+                        )}
+                        <span>
+                          {repo.license === "NOASSERTION"
+                            ? "Review license"
+                            : repo.license || "Review license"}
+                        </span>
+                        <button
+                          aria-pressed={selected.includes(repo.id)}
+                          disabled={
+                            !selected.includes(repo.id) && selected.length === 3
+                          }
+                          aria-label={"Compare " + title(repo)}
+                          onClick={() => toggle(repo.id)}
+                        >
+                          <Icon
+                            name={selected.includes(repo.id) ? "check" : "plus"}
+                            size={13}
+                          />
+                          Compare
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="feed-item-actions">
-                    <span
-                      title={
-                        repo.stars.toLocaleString("en-US") + " GitHub stars"
-                      }
-                    >
-                      <Icon name="star" size={14} />
-                      {Intl.NumberFormat("en", {
-                        notation: "compact",
-                        maximumFractionDigits: 1,
-                      }).format(repo.stars)}
-                    </span>
-                    <Save p={repo} label={title(repo)} />
-                  </div>
-                </article>
-              );
-            })}
+                    <div className="feed-item-actions">
+                      <span
+                        title={
+                          repo.stars.toLocaleString("en-US") + " GitHub stars"
+                        }
+                      >
+                        <Icon name="star" size={14} />
+                        {Intl.NumberFormat("en", {
+                          notation: "compact",
+                          maximumFractionDigits: 1,
+                        }).format(repo.stars)}
+                      </span>
+                      <Save p={repo} label={title(repo)} />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
             {!resultCount && (
               <div className="feed-empty">
                 No matching projects.{" "}

@@ -6,5 +6,5 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 export default async function Home() {
-  return <Directory published={await listings("approved")} />;
+  return <Directory featured published={await listings("approved")} />;
 }
